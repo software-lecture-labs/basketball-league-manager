@@ -4,7 +4,8 @@ Basketball League Manager project for managing teams, players, and matches.
 
 ## Features
 
-- Manage teams and their rosters
 - Track player statistics
-- Schedule and record match results
 - Generate league standings
+- Manage coaches and assign them to teams
+- Record player injuries and availability
+- View head-to-head records between teams

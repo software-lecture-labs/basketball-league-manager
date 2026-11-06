@@ -26,6 +26,11 @@ replay_pid*
 # Maven
 target/
 
+# Environment files (secrets); only the template is tracked
+.env
+.env.*
+!.env.example
+
 # IntelliJ IDEA
 .idea/
 *.iml

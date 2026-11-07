@@ -3,6 +3,7 @@ title: ADR-0001-Katmanlı Monolit Mimari
 status: Önerildi
 date: 2026-11-07
 author: Ömer Ünlü
+deciders: Ömer Ünlü, Osman Balcı, Mustafa Budak
 ---
 
 # ADR-0001: Katmanlı Monolit Mimari
@@ -19,7 +20,7 @@ Application Server üzerinde gösterilebilmesi gerekiyor.
 
 İşlerin önemli bölümü kayıt ekleme, güncelleme ve listelemedir. Bunun yanında fikstür üretimi, skor tutarlılığı,
 maç durum geçişleri ve eşitlik bozma gibi bağımsız test edilmesi gereken kurallar vardır.
-Maç onayı ve transfer, birden fazla kaydın birlikte değiştirilmesini gerektirir.
+Maç onayı tutarlı doğrulama ve durum güncellemesi; transfer birden fazla kaydın birlikte değiştirilmesini gerektirir.
 
 ### EuroLeague verisinin kapsamı
 
@@ -56,7 +57,8 @@ Bağımsız dağıtım ve ayrı ölçekleme ihtiyacı olmadığı varsayımı, k
 ### Kararın karşılaması gereken somut senaryolar
 
 - Tek sayıda takımın bay kuralı, HTTP ve veritabanından bağımsız test edilir.
-- Onayın ikinci güncellemesi başarısızsa maç ve iki puan durumu birlikte geri alınır.
+- Başarısız maç onayı puan durumunu etkilemez; yalnızca onaylanmış maçlar hesaplamaya katılır.
+- Transfer kaydı oluşturulamazsa oyuncunun takım değişikliği de geri alınır.
 - Yanıt alanı değişikliği DTO/mapper, sorgu değişikliği repository sorumluluğunda yönetilir.
 - Geçersiz maç durumu, HTTP ayrıntısı taşımayan domain hatası üretir.
 
@@ -105,6 +107,7 @@ flowchart TB
         domain["domain · saf kurallar"]
         dto["dto · istek ve yanıt sözleşmeleri"]
         exception["exception · HTTP hata eşleyicileri"]
+        config["config · başlangıç ve veri kaynağı yapılandırması"]
         resource --> service
         resource --> dto
         resource -.->|Bağımlılık izni| exception
@@ -132,25 +135,30 @@ Resource → exception kesikli oku bağımlılık iznidir; hata eşleyicilerini 
 Paketlerin kökü `com.basketballleague` olacaktır. Aşağıdaki erişim listesi proje içi paket bağımlılıklarını tanımlar;
 JDK ve ilgili katmanın Jakarta API bağımlılıkları bu sütuna dahil değildir.
 
-| Paket        | Sorumluluk                                                     | İzin verilen proje paketleri            |
-| ------------ | -------------------------------------------------------------- | --------------------------------------- |
-| `resource`   | HTTP isteğini servise, servis sonucunu HTTP yanıtına çevirir.  | `service`, `dto`, `exception`           |
-| `service`    | Kullanım senaryosu, transaction ve dönüşüm.                    | `repository`, `entity`, `domain`, `dto` |
-| `repository` | JPA ile entity yükler, kaydeder ve sorgular.                   | `entity`                                |
-| `entity`     | Kalıcı durumu ve bu durumu değiştiren iş davranışlarını taşır. | `domain`                                |
-| `domain`     | Fikstür, puanlama ve benzeri saf kuralları tanımlar.           | Başka proje paketi yok; yalnızca JDK.   |
-| `dto`        | REST istek ve yanıt sözleşmelerini taşır.                      | Başka proje paketi yok.                 |
-| `exception`  | Hataları HTTP hata yanıtına dönüştürür.                        | `domain`, `dto`                         |
+| Paket        | Sorumluluk                                                             | İzin verilen proje paketleri            |
+| ------------ | ---------------------------------------------------------------------- | --------------------------------------- |
+| `resource`   | HTTP isteğini servise, servis sonucunu HTTP yanıtına çevirir.          | `service`, `dto`, `exception`           |
+| `service`    | Kullanım senaryosu, transaction ve dönüşüm.                            | `repository`, `entity`, `domain`, `dto` |
+| `repository` | JPA ile entity yükler, kaydeder ve sorgular.                           | `entity`                                |
+| `entity`     | Kalıcı durumu ve bu durumu değiştiren iş davranışlarını taşır.         | `domain`                                |
+| `domain`     | Fikstür, puanlama ve benzeri saf kuralları tanımlar.                   | Başka proje paketi yok; yalnızca JDK.   |
+| `dto`        | REST istek ve yanıt sözleşmelerini taşır.                              | Başka proje paketi yok.                 |
+| `exception`  | Hataları HTTP hata yanıtına dönüştürür.                                | `domain`, `dto`                         |
+| `config`     | Uygulama başlangıcı ve veri kaynağı yapılandırması; iş kuralı taşımaz. | Başka proje paketi yok.                 |
 
-[REST başlangıcı] ve [DataSourceConfig] gibi yapılandırma sınıfları iş kuralı taşımaz.
+[REST başlangıcı] ve [DataSourceConfig] şu an kök pakettedir; ArchUnit kuralları eklenirken
+`config` paketine taşınacaktır.
 Domain'de `jakarta`, `javax`, `java.sql` bağımlılığı yoktur; DTO'larda doğrulama anotasyonları kullanılabilir.
 
 ### Katman sınırlarının uygulanması
 
 1. **Resource yalnızca servisi çağırır.** İstek biçimini doğrular; iş hesabı veya `EntityManager` kullanımı içermez.
 2. **REST sözleşmesi DTO'dur.** Entity alınmaz/döndürülmez; dönüşüm service paketindeki mapper'larda yapılır.
+   Service'in DTO döndürmesi, şu an tek istemci REST API olduğu için bilinçli bir sadeleştirmedir;
+   ikinci bir istemci eklenirse yeniden değerlendirilir.
 3. **Service koordinasyonu üstlenir.** Service Layer yaklaşımına uygun olarak yükleme, transaction ve sonuç
-   dönüşümünü yönetir. `GameService.confirm`, `Game.confirm(...)` ve `PointsPolicy` davranışlarını çağırır.
+   dönüşümünü yönetir. `GameService.confirm`, `Game.confirm(...)` davranışını çağırır;
+   puan durumu servisi hesaplama sırasında `PointsPolicy` kullanır.
 4. **Repository sorguları kapsüller.** JPQL ve `EntityManager` servise sızmaz. Servislerin bağımlı olduğu küçük
    arayüzler test nesnesi kullanımını sağlar; her sınıfa arayüz veya genel repository hiyerarşisi eklenmez.
 5. **Entity veriyle davranışı birleştirir.** Domain Model yaklaşımı doğrultusunda public setter yerine `confirm()`
@@ -179,14 +187,14 @@ Tablo hedef davranışları gösterir; `PointsPolicy`, `TieBreaker` ve repositor
 
 ### Transaction sınırı: maç onayı örneği
 
-Maç onayı, mimarinin neden tek uygulama ve veritabanıyla başladığını gösteren temel kullanım senaryosudur.
+Maç onayı, service katmanındaki transaction sınırı ile domain doğrulamasının birlikte çalışmasına örnektir.
 Hedef akış şöyledir; ilgili sınıflar bu belgeyle birlikte uygulanmaz:
 
 1. Resource, onay isteğini `GameService.confirm` kullanım senaryosuna iletir.
-2. Service, maç ve gerekli puan durumu kayıtlarını repository'lerden yükler.
-3. `Game.confirm(...)`, maçın durumu ve skor tutarlılığı gibi kuralları denetler.
-4. Service, iki takımın puan durumunun `PointsPolicy` kullanılarak güncellenmesini koordine eder.
-5. Tüm değişiklikler başarılıysa aynı transaction tamamlanır; başarısızlıkta tüm değişiklikler geri alınır.
+2. Service, maçı ve doğrulama için gerekli çeyrek skorları ile oyuncu istatistiklerini repository'lerden yükler.
+3. `Game.confirm(...)`, maçın durumu ve skor tutarlılığını denetleyerek maçı `CONFIRMED` durumuna geçirir.
+4. Güncelleme başarılıysa transaction tamamlanır; başarısızlıkta bu işlemin değişiklikleri geri alınır.
+5. Puan durumu sonraki okumada onaylanmış maçlardan hesaplanır; onay sırasında ayrı puan kaydı güncellenmez.
 
 Transaction sınırı service katmanındaki `@Transactional` kullanım senaryosudur; her repository çağrısı ayrı
 bir işlem olarak tamamlanmaz. Jakarta'nın transaction desteği yönetilen nesneler üzerindeki çağrılarla çalışır;
@@ -197,16 +205,36 @@ Varsayılan rollback davranışı checked exception ile `RuntimeException` için
 Mevcut [DomainException], `RuntimeException` tabanından türer; buna rağmen hata yutulup normal yanıt üretilirse
 beklenen başarısızlık akışı bozulabilir. Onay işleminin hata yolları da başarı yolu kadar test edilmelidir.
 
-Tek WAR, veri tutarlılığını tek başına garanti etmez. Transaction sınırının gerçek çalışma ortamında etkin olması,
-rollback testi ve eşzamanlı güncellemelerin ayrıca korunması gerekir. Puan durumunun saklanması ve kilitleme
-stratejisi, kendi karar belgelerinde ayrıntılandırılacaktır.
+Tek WAR, veri tutarlılığını tek başına garanti etmez. Transaction sınırı gerçek çalışma ortamında doğrulanmalı;
+aynı maça eşzamanlı müdahaleler `@Version` ile korunmalı ve çakışma testiyle kanıtlanmalıdır.
+Birden fazla kaydın birlikte geri alınması transfer üzerinden gösterilir: oyuncunun takımı değiştirilir ve transfer
+kaydı aynı transaction'da oluşturulur; kayıt oluşturulamazsa takım değişikliği de geri alınır.
+
+### Puan durumunun üretilmesi
+
+**Puan durumunu ayrı bir `standing` tablosunda saklamadan, yalnızca `CONFIRMED` maçlardan hesaplayacağız.**
+İlk uygulamada repository sorgusu sezon bazında oynanan maç, galibiyet, mağlubiyet, atılan ve yenilen sayı toplamlarını
+üretecek; puan hesabı `PointsPolicy`, sıralama ise domain'deki eşitlik bozma kurallarıyla yapılacaktır.
+İkili averaj için takımların birbirleriyle oynadığı onaylanmış maç sonuçları da toplu sorguyla alınacaktır;
+genel sezon toplamları bu hesabı tek başına karşılamaz.
+Henüz onaylanmış maçı olmayan sezon takımları da sıfır değerlerle listelenecektir.
+
+Ayrı tabloda toplam saklamak okumayı kolaylaştırır; ancak her onayda maçlarla uyumlu ek güncellemeler gerektirir.
+Hesaplama yaklaşımı bu eşzamanlama yükünü ve aynı takımın ortak puan kaydı üzerindeki güncelleme çakışmasını kaldırır.
+Karşılığında her okumada sorgu maliyeti oluşur. Mevcut lig ölçeğinde bu maliyetin yönetilebilir olduğu varsayımı
+temsili sezon verisiyle ölçülecektir. Aynı maç üzerindeki eşzamanlı değişiklikler yine ayrıca korunacaktır.
+
+Ölçülen sorgu maliyeti veya yeni ürün ihtiyaçları bu yaklaşımı yetersiz kılarsa karar ayrı bir ADR ile yeniden
+değerlendirilecektir. Saklanan bir özet yapıya geçiş, güncellik ve eşzamanlılık kurallarıyla birlikte gerekçelendirilir.
+Bu yeniden değerlendirme koşulu mevcut hesaplama kararını belirsiz bırakmaz; uygulama bu karara göre ilerler.
 
 ### Bu ADR'nin karar sınırı
 
 | Burada belirlenen                          | Ayrı çalışmada ayrıntılandırılacak                                             |
 | ------------------------------------------ | ------------------------------------------------------------------------------ |
 | Tek dağıtım birimi ve paket bağımlılıkları | Jakarta/Payara seçiminin diğer teknolojilerle karşılaştırması.                 |
-| Service üzerinde transaction sınırı        | Maç onayının kayıt modeli, rollback senaryoları ve puan durumu saklama kararı. |
+| Service üzerinde transaction sınırı        | Maç onayının kayıt modeli, transfer rollback ve kilitleme ayrıntıları.          |
+| Puan durumunu onaylı maçlardan hesaplama    | Sorgu tasarımı, indeksler ve temsili sezon verisiyle performans doğrulaması.      |
 | Entity davranışı ile saf domain ayrımı     | Entity eşlemeleri, tablo alanları, migration ve kimlik tipi.                   |
 | Mimari kuralları testle koruma yaklaşımı   | ArchUnit uygulaması ve eşzamanlı güncelleme stratejisi.                        |
 

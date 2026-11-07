@@ -330,39 +330,9 @@ yeni ihtiyaç ve geçiş maliyeti ayrı bir ADR ile karşılaştırılır.
 | Testte denetlenebilir zaman | [HealthService] ve [servis testi]                | Ortak CDI `Clock` producer'ı henüz yoktur.            |
 | JTA veri kaynağı            | [Persistence yapılandırması], [DataSourceConfig] | İş transaction'ı kanıtı değildir.                     |
 
-### Uygulama sırasında eklenecek kontroller
-
-Aşağıdaki kontroller planlanmıştır; bu ADR test veya üretim kodu eklemez.
-Paket adı, public sınıflara erişimi engellemez. ArchUnit, bytecode üzerinden bağımlılıkları denetler;
-yalnızca derlemenin geçmesi mimari uyum kanıtı değildir. [2]
-
-| Kural                                            | Kim korur?                           | Planlanan kural / kanıt                         |
-| ------------------------------------------------ | ------------------------------------ | ----------------------------------------------- |
-| Resource repository veya entity'ye erişmez       | ArchUnit                             | `resource_does_not_touch_repository_or_entity`  |
-| Repository yalnızca entity paketine bağımlıdır   | ArchUnit                             | `repository_only_sees_entity`                   |
-| Entity üst katmanlara bağımlı değildir           | ArchUnit                             | `entity_does_not_see_upper_layers`              |
-| DTO üst katmanlara ve entity'ye bağımlı değildir | ArchUnit                             | `dto_is_a_pure_contract`                        |
-| Domain yalnızca JDK kullanır                     | ArchUnit                             | `domain_is_framework_free`                      |
-| `@Transactional` yalnızca service içindedir      | ArchUnit                             | `transactional_only_in_service`                 |
-| Field injection yasaktır                         | ArchUnit                             | `no_field_injection`                            |
-| Entity'de public setter yasaktır                 | ArchUnit                             | `entities_have_no_public_setters`               |
-| REST entity döndürmez veya kabul etmez           | İmza incelemesi ve resource testleri | DTO istek/yanıt sözleşmeleri                    |
-| Maç onayı kısmen kalıcı olamaz                   | Transaction entegrasyon testi        | Hata sonrası maç ve iki puan durumu değişmemeli |
-
-ArchUnit kuralı, geçici bir yasak bağımlılıkla başarısız olmalı; ihlal kaldırıldığında yeniden geçmelidir. [2]
-Boş sınıf kümesini denetleyen kurallar varsayılan olarak başarısız olur. Henüz oluşmamış paketler için genel bir
-sessiz geçiş ayarı açılmaz; kuralların devreye alınma zamanı belirlenir.
-
-Rollback doğrulamasında gerçek servis transaction sınırı etkin olmalı; hata sonrasındaki kayıtlar yeni bir
-persistence context üzerinden okunmalıdır. Elle açılan bir `RESOURCE_LOCAL` transaction yalnızca o testteki
-işlem davranışını gösterir; Payara'nın servis üzerindeki `@Transactional` sınırını etkinleştirdiğini kanıtlamaz.
-
-Birim testleri iş davranışını, repository entegrasyon testleri migration ve sorguları, ArchUnit yapısal kuralları sınar.
-Mockito gerçek JPA/CDI davranışını, ArchUnit hesapların doğruluğunu kanıtlamaz.
-Payara üzerinden HTTP kontrolü dağıtımı doğrular; sınır değer testlerinin yerini almaz.
-
-Mevcut [CI iş akışı] `verify` çalıştırır ve JaCoCo raporunu saklar. ArchUnit ve Testcontainers/Failsafe henüz yoktur;
-yeşil build planın tamamlandığı anlamına gelmez. Yeni kontroller ilgili özellik PR'larında eklenecektir.
+Katman bağımlılıkları ArchUnit ile, transaction davranışı entegrasyon testleriyle doğrulanacaktır.
+Planlanan kurallar, doğrulama yöntemleri ve test altyapısının mevcut durumu
+[Mimari test planında](../testing/mimari-test-plani.md) açıklanmıştır. Bu kontroller henüz uygulanmamıştır.
 
 ## Kaynaklar
 
@@ -386,7 +356,6 @@ Erişim tarihi: **7 Kasım 2026**. Ders notları incelenen commit'e bağlanmış
 [fikstür testleri]: ../../src/test/java/com/basketballleague/domain/FixtureGeneratorTest.java
 [servis testi]: ../../src/test/java/com/basketballleague/service/HealthServiceTest.java
 [DomainException]: ../../src/main/java/com/basketballleague/domain/DomainException.java
-[CI iş akışı]: ../../.github/workflows/build.yml
 [1]: https://github.com/software-lecture-labs/study-notes/blob/d33d07147fb440a76ac89944a5655e2021073da7/java-chapter-06.md
 [2]: https://github.com/software-lecture-labs/study-notes/blob/d33d07147fb440a76ac89944a5655e2021073da7/java-chapter-09.md
 [3]: https://jakarta.ee/specifications/transactions/2.0/jakarta-transactions-spec-2.0.html

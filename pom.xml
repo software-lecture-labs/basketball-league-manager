@@ -23,6 +23,7 @@
         <junit.version>5.14.4</junit.version>
         <assertj.version>3.27.7</assertj.version>
         <mockito.version>5.24.0</mockito.version>
+        <archunit.version>1.5.1</archunit.version>
         <slf4j.version>2.0.20</slf4j.version>
         <!-- Test-only implementations; versions match the ones bundled in Payara Micro 7.2026.9. -->
         <jersey.version>4.0.2</jersey.version>
@@ -102,6 +103,12 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>${archunit.version}</version>
             <scope>test</scope>
         </dependency>
         <!-- Lets unit tests build jakarta.ws.rs.core.Response objects. -->

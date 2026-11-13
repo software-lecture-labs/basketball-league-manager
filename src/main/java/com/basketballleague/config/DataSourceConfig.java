@@ -1,4 +1,4 @@
-package com.basketballleague;
+package com.basketballleague.config;
 
 import jakarta.annotation.sql.DataSourceDefinition;
 import jakarta.enterprise.context.ApplicationScoped;

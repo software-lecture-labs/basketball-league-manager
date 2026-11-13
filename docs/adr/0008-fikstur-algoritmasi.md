@@ -1,6 +1,6 @@
 ---
 title: ADR-0008-Fikstür Üretimi için Circle Method
-status: Önerildi
+status: Kabul Edildi
 date: 2026-11-07
 author: Ömer Ünlü
 deciders: Ömer Ünlü, Osman Balcı, Mustafa Budak

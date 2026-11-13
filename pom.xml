@@ -24,6 +24,12 @@
         <assertj.version>3.27.7</assertj.version>
         <mockito.version>5.24.0</mockito.version>
         <archunit.version>1.5.1</archunit.version>
+        <slf4j.version>2.0.20</slf4j.version>
+        <!-- Test-only implementations; versions match the ones bundled in Payara Micro 7.2026.9. -->
+        <jersey.version>4.0.2</jersey.version>
+        <hibernate-validator.version>9.0.1.Final</hibernate-validator.version>
+        <expressly.version>6.0.0</expressly.version>
+        <yasson.version>3.0.4</yasson.version>
 
         <!-- Plugins -->
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
@@ -65,6 +71,18 @@
             <version>${postgresql.version}</version>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <!-- Routes SLF4J to java.util.logging, so log records reach Payara's server.log. -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>runtime</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -91,6 +109,33 @@
             <groupId>com.tngtech.archunit</groupId>
             <artifactId>archunit-junit5</artifactId>
             <version>${archunit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Lets unit tests build jakarta.ws.rs.core.Response objects. -->
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-common</artifactId>
+            <version>${jersey.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Produces real constraint violation paths and messages in unit tests. -->
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>${hibernate-validator.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.expressly</groupId>
+            <artifactId>expressly</artifactId>
+            <version>${expressly.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Payara's JSON-B implementation; checks the problem details JSON shown in ADR-0006. -->
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+            <version>${yasson.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

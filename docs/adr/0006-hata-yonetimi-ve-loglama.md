@@ -1,6 +1,6 @@
 ---
 title: ADR-0006-Hata Yönetimi ve Loglama Politikası
-status: Önerildi
+status: Kabul Edildi
 date: 2026-11-13
 author: Ömer Ünlü
 deciders: Ömer Ünlü, Osman Balcı, Mustafa Budak

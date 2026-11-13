@@ -1,0 +1,31 @@
+name: PR Size
+
+# PR boyutunu etiketler. Testler ve belgeler sayılmaz; böylece etiket
+# derste istenen "~400 satır üretim kodu" sınırını ölçer.
+on:
+  pull_request:
+    branches: [main, dev]
+
+permissions: {}
+
+jobs:
+  size-label:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: codelytv/pr-size-labeler@v1
+        with:
+          xs_max_size: '10'
+          s_max_size: '100'
+          m_max_size: '250'
+          l_max_size: '400'
+          fail_if_xl: 'false'
+          message_if_xl: >
+            Bu PR, testler ve belgeler hariç 400 satırlık önerilen sınırı aşıyor.
+            İşi daha küçük PR'lara bölmeyi düşünün ya da nedenini PR açıklamasında yazın.
+          files_to_ignore: |
+            "src/test/*"
+            "docs/*"
+            "*.md"

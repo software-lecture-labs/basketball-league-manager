@@ -135,7 +135,7 @@ bakar. Payara'daki gerçek davranış, ilgili entegrasyon testleriyle (planlanan
 | `type` için projeye özel, erişilebilir URI'ler | Her hata türü için yayınlanmış bir belge sayfası gerekir; bu kapsamda karşılığı yoktur. Aynı ayrımı `code` alanı sağlar. |
 | `detail` olarak istisna mesajını göndermek | Teknik ayrıntı, SQL veya kısıt adı istemciye sızabilir; dili ve içeriği kontrol edilemez. |
 | `instance` olarak istek yolunu göndermek | Yaygın bir kullanım olsa da RFC 9457'deki anlamı (hatanın kendisini tanımlama) karşılamaz; yol bilgisi istemcide zaten vardır. |
-| Loglama için doğrudan `java.util.logging` veya `System.Logger` | Ek bağımlılık gerektirmez. Ancak dersin örnek projesi SLF4J + `slf4j-jdk14` kullanır ve aynı Payara log altyapısına yazar; parametreli mesaj desteği de bu API'de daha yaygındır. |
+| Loglama için doğrudan `java.util.logging` veya `System.Logger` | Ek bağımlılık gerektirmez ve Payara'nın log altyapısına doğrudan yazar; teknik olarak yeterlidir. SLF4J ise Java kütüphanelerinde yaygın kullanılan bir loglama arayüzüdür; `slf4j-jdk14` ile aynı Payara altyapısına yazdığı için bu avantajdan bir şey kaybedilmez. Dersin örnek projesindeki (farm-java-lab-northwind, ADR-0002) karar da budur; ekip tek bir örneği izler. Bedeli iki küçük bağımlılıktır. |
 
 ## Sonuçlar
 

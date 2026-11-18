@@ -1,4 +1,4 @@
----
+﻿---
 title: ADR-0001-Katmanlı Monolit Mimari
 status: Kabul Edildi
 date: 2026-11-07
@@ -232,7 +232,7 @@ Bu yeniden değerlendirme koşulu mevcut hesaplama kararını belirsiz bırakmaz
 
 | Burada belirlenen                          | Ayrı çalışmada ayrıntılandırılacak                                             |
 | ------------------------------------------ | ------------------------------------------------------------------------------ |
-| Tek dağıtım birimi ve paket bağımlılıkları | Jakarta/Payara seçiminin diğer teknolojilerle karşılaştırması.                 |
+| Tek dağıtım birimi ve paket bağımlılıkları | Jakarta/Payara seçiminin diğer teknolojilerle karşılaştırması ([ADR-0002](0002-jakarta-ee-ve-payara-micro.md)). |
 | Service üzerinde transaction sınırı        | Maç onayının kayıt modeli, transfer rollback ve kilitleme ayrıntıları.          |
 | Puan durumunu onaylı maçlardan hesaplama    | Sorgu tasarımı, indeksler ve temsili sezon verisiyle performans doğrulaması.      |
 | Entity davranışı ile saf domain ayrımı     | Entity eşlemeleri, tablo alanları, migration ve kimlik tipi.                   |

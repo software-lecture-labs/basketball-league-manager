@@ -39,3 +39,27 @@ Get-Content .env | Where-Object { $_ -match '^[A-Z_]+=' } | ForEach-Object {
 ```
 
 If a variable is missing, the application is not deployed and `GET /api/ping` returns 404.
+
+### Database Migrations
+
+Schema changes are managed by [Flyway](https://flywaydb.org/). Migration files live
+in `src/main/resources/db/migration/` and follow the `V<number>__<description>.sql` naming
+convention. **PostgreSQL 18.x is required.**
+
+After loading the environment variables (see above), run the migrations:
+
+```powershell
+# Windows (PowerShell)
+.\mvnw.cmd flyway:migrate
+.\mvnw.cmd flyway:info
+```
+
+```bash
+# macOS / Linux
+./mvnw flyway:migrate
+./mvnw flyway:info
+```
+
+> [!IMPORTANT]
+> Never edit a migration file that has already been applied. All changes must go into a new
+> `V<next>__<description>.sql` file.

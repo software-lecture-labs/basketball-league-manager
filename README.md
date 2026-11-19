@@ -402,11 +402,21 @@ Kararlar [ADR-0006](docs/adr/0006-hata-yonetimi-ve-loglama.md)'dadır. Hatalar
 
 ## Veri kaynağı
 
-Takım ve oyuncu verisi elle hazırlanıp Flyway seed migration'ına yazılacaktır. Otomatik veri çekme veya canlı
-veri API'si kullanılmaz.
+Takım verisi elle hazırlanıp Flyway seed migration'ına yazılır
+(`V2__seed_euroleague_2025_26_teams.sql`). Otomatik veri çekme veya canlı veri API'si kullanılmaz.
 
-| Bilgi                                | Değer                                                                  |
-| ------------------------------------ | ---------------------------------------------------------------------- |
+| Bilgi                      | Değer                                                                                          |
+| -------------------------- | ---------------------------------------------------------------------------------------------- |
+| Referans sezonu            | EuroLeague 2025-26 (30 Eylül 2025 - 24 Mayıs 2026), normal sezonun 20 kulübü                   |
+| Kaynak                     | [Wikipedia: 2025–26 EuroLeague](https://en.wikipedia.org/wiki/2025%E2%80%9326_EuroLeague), "Qualified teams" |
+| Alınma tarihi              | 20 Kasım 2026                                                                                  |
+| Veri sürümü                | `euroleague-2025-26-teams-v1`                                                                  |
+| Takım alanları             | Ad (kaynaktaki yazımıyla, sponsorsuz), şehir (Türkçe yerleşik yazımıyla)                       |
+| Kadrolar                   | Henüz yok; referans tarihi seçilince ayrı bir migration ile eklenecek                          |
+| Oyuncu alanları            | Ad, soyad, forma numarası, pozisyon                                                            |
+| Maç sonuçları, transferler | Uygulamada üretilen demo verisi; resmî EuroLeague sonucu değildir                              |
+
+------------------------------------ | ---------------------------------------------------------------------- |
 | Kapsam                               | Tek EuroLeague sezonu, o sezonda tek bir referans tarihindeki kadrolar |
 | Oyuncu alanları                      | Ad, soyad, forma numarası, pozisyon                                    |
 | Referans sezonu ve tarihi            | Henüz seçilmedi (seed PR'ında eklenecek)                               |

@@ -2,8 +2,8 @@ package com.basketballleague.repository;
 
 import com.basketballleague.entity.Team;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -14,13 +14,14 @@ import java.util.Optional;
 @ApplicationScoped
 public class TeamRepository {
 
-    @PersistenceContext
-    private EntityManager em;
+    private final EntityManager em;
 
-    /** Required by CDI to create the proxy. */
+    /** Required by CDI to create the proxy; never used to serve calls. */
     protected TeamRepository() {
+        this.em = null;
     }
 
+    @Inject
     public TeamRepository(EntityManager em) {
         this.em = Objects.requireNonNull(em, "EntityManager must not be null");
     }

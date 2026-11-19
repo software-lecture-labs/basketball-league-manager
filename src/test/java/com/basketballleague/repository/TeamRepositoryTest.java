@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -40,13 +42,15 @@ class TeamRepositoryTest {
     }
 
     @Test
-    @DisplayName("Persists new team when ID is null")
+    @DisplayName("Persists and flushes new team when ID is null, so the generated ID is available")
     void savesNewTeam() {
         Team team = new Team("Fenerbahçe Beko", "İstanbul");
 
         Team saved = repository.save(team);
 
-        verify(em).persist(team);
+        InOrder order = inOrder(em);
+        order.verify(em).persist(team);
+        order.verify(em).flush();
         assertThat(saved).isSameAs(team);
     }
 
@@ -112,6 +116,22 @@ class TeamRepositoryTest {
         List<Team> result = repository.findAll();
 
         assertThat(result).hasSize(2).isEqualTo(teams);
+    }
+
+    @Test
+    @DisplayName("Finds one page of teams")
+    void findsPage() {
+        List<Team> teams = List.of(new Team("Real Madrid", "Madrid"));
+        when(em.createQuery(anyString(), eq(Team.class))).thenReturn(teamQuery);
+        when(teamQuery.setFirstResult(40)).thenReturn(teamQuery);
+        when(teamQuery.setMaxResults(20)).thenReturn(teamQuery);
+        when(teamQuery.getResultList()).thenReturn(teams);
+
+        List<Team> result = repository.findPage(40, 20);
+
+        assertThat(result).isEqualTo(teams);
+        verify(teamQuery).setFirstResult(40);
+        verify(teamQuery).setMaxResults(20);
     }
 
     @Test

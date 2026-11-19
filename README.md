@@ -211,7 +211,9 @@ basketball-league-manager/
 │   ├── repository/
 │   ├── resource/
 │   └── service/
-├── src/main/resources/META-INF/persistence.xml
+├── src/main/resources/
+│   ├── META-INF/persistence.xml
+│   └── db/migration/         # Flyway migration'ları
 ├── src/test/java/com/basketballleague/
 │   └── architecture/         # ArchUnit kuralları
 ├── .env.example              # Yerel ortam değişkenleri şablonu
@@ -232,9 +234,10 @@ basketball-league-manager/
 | JUnit 5 · AssertJ · Mockito | 5.14.4 · 3.27.7 · 5.24.0 | Birim testleri                         |
 | ArchUnit                    | 1.5.1                    | Mimari kuralların testi                |
 | JaCoCo                      | 0.8.15                   | Test kapsamı raporu                    |
+| Flyway (Maven eklentisi)    | 13.12.2                  | Şema migration'ları                    |
+| SLF4J + `slf4j-jdk14`       | 2.0.20                   | Loglama (ADR-0006)                     |
 
-**Planlanan:** Flyway (şema migration'ları), SLF4J + `slf4j-jdk14` (loglama, ADR-0006),
-Testcontainers (gerçek PostgreSQL ile entegrasyon testleri). Bunlar henüz `pom.xml`'de değildir.
+**Planlanan:** Testcontainers (gerçek PostgreSQL ile entegrasyon testleri). Henüz `pom.xml`'de değildir.
 
 ---
 
@@ -290,7 +293,23 @@ Get-Content .env | Where-Object { $_ -match '^[A-Z_]+=' } | ForEach-Object {
 }
 ```
 
-### 3. Derleyin
+### 3. Şemayı oluşturun (Flyway)
+
+Tablolar `src/main/resources/db/migration/` altındaki Flyway migration'larıyla oluşturulur. Uygulama
+açılırken migration çalıştırmaz; ortam değişkenlerini yüklediğiniz aynı terminalde şunu çalıştırın:
+
+```bash
+./mvnw flyway:migrate         # macOS / Linux
+.\mvnw.cmd flyway:migrate     # Windows
+```
+
+`flyway:info` hangi migration'ların uygulandığını gösterir.
+
+> [!IMPORTANT]
+> Uygulanmış bir migration dosyası asla değiştirilmez; her değişiklik yeni bir `V<sıradaki>__<açıklama>.sql`
+> dosyasıyla yapılır. Değiştirilmiş dosya Flyway'in checksum doğrulamasında hata verir.
+
+### 4. Derleyin
 
 ```bash
 ./mvnw clean package        # macOS / Linux
@@ -299,7 +318,7 @@ Get-Content .env | Where-Object { $_ -match '^[A-Z_]+=' } | ForEach-Object {
 
 WAR dosyası `target/basketball-league.war` olarak oluşur.
 
-### 4. Payara Micro ile başlatın
+### 5. Payara Micro ile başlatın
 
 Aynı terminalde, `<payara-micro.jar>` yerine indirdiğiniz JAR dosyasının yolunu yazın:
 
@@ -309,7 +328,7 @@ java -jar <payara-micro.jar> --deploy target/basketball-league.war --contextroot
 
 `--nocluster`, gereksiz Hazelcast kümesini ve macOS güvenlik duvarı uyarısını önler.
 
-### 5. Kontrol edin
+### 6. Kontrol edin
 
 ```bash
 curl http://localhost:8080/basketball-league/api/ping

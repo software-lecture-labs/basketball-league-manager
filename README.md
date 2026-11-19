@@ -1,65 +1,455 @@
 # Basketball League Manager
 
-Basketball League Manager project for managing teams, players, and matches.
+[![Build](https://github.com/software-lecture-labs/basketball-league-manager/actions/workflows/build.yml/badge.svg?branch=dev)](https://github.com/software-lecture-labs/basketball-league-manager/actions/workflows/build.yml)
+![Java 21](https://img.shields.io/badge/Java-21-orange)
+![Jakarta EE 11](https://img.shields.io/badge/Jakarta%20EE-11-blue)
+![PostgreSQL 18](https://img.shields.io/badge/PostgreSQL-18-336791)
 
-## Features
+Bir basketbol liginin fikstürünü, maç sonuçlarını ve puan durumunu otomatik yöneten web uygulaması.
+Yönetici veriyi girer, sistem hesaplar, herkes güncel tabloyu görür.
 
-- Track player statistics
-- Generate league standings
-- Manage coaches and assign them to teams
-- Record player injuries and availability
-- View head-to-head records between teams
+> [!NOTE]
+> Başlangıç verisi olarak gerçek EuroLeague takım ve oyuncu **adları** kullanılır. Skorlar, transferler ve
+> istatistikler **demo verisidir**; resmî EuroLeague sonucu değildir. Logo, amblem ve resmî marka görseli kullanılmaz.
 
-## Configuration
+## İçindekiler
 
-Database settings are read from environment variables, never from source code:
+- [Özellikler](#özellikler)
+- [Lig kuralları](#lig-kuralları)
+- [Mimari](#mimari)
+- [Teknolojiler](#teknolojiler)
+- [Kurulum ve çalıştırma](#kurulum-ve-çalıştırma)
+- [Testler ve kalite](#testler-ve-kalite)
+- [Hata yönetimi ve loglama](#hata-yönetimi-ve-loglama)
+- [Veri kaynağı](#veri-kaynağı)
+- [Mimari karar kayıtları (ADR)](#mimari-karar-kayıtları-adr)
+- [Çalışma düzeni](#çalışma-düzeni)
+- [Ekip](#ekip)
 
-| Variable | Example |
-|---|---|
-| `DB_URL` | `jdbc:postgresql://localhost:5432/basketball_league` |
-| `DB_USER` | `basketball` |
-| `DB_PASSWORD` | your local database password |
+---
 
-Copy `.env.example` to `.env` and fill in the values. `.env` is git-ignored, so keep real secrets
-only there.
+## Özellikler
 
-Payara does not read `.env` by itself. Load the variables into the shell that starts Payara:
+> [!NOTE]
+> Proje geliştirme aşamasındadır. Bu bölüm hedeflenen kapsamı anlatır; tamamlanan ve devam eden işler
+> [pull request](https://github.com/software-lecture-labs/basketball-league-manager/pulls?q=is%3Apr) ve
+> [issue](https://github.com/software-lecture-labs/basketball-league-manager/issues) listelerinde izlenir.
+
+İki tür kullanıcı vardır:
+
+- **Lig yöneticisi:** takım ve oyuncu ekler, sezon ve fikstür oluşturur, skor girer ve onaylar, transfer yapar.
+- **Ziyaretçi (oyuncu, taraftar):** giriş yapmadan yalnızca görüntüler.
+
+| Özellik                  | Açıklama                                                                                      |
+| ------------------------ | --------------------------------------------------------------------------------------------- |
+| Takım ve oyuncu yönetimi | Ekleme, listeleme, güncelleme. Oyuncu için yalnızca ad, soyad, forma numarası, pozisyon.      |
+| Otomatik fikstür         | Sezondaki takımlar için çift devreli fikstür; takım sayısı tek veya çift olabilir.            |
+| Maç sonucu               | Çeyrek çeyrek skor (1–4, gerekirse 5+ uzatma) ve oyuncu başına sayı girişi.                   |
+| Maç onayı                | Skorlar tutarlıysa maç onaylanır ve kilitlenir; onaylı maç puan durumuna girer.               |
+| Puan durumu              | Onaylı maçlardan her okumada yeniden hesaplanır; ayrı bir tabloda saklanmaz.                  |
+| Hafif canlı skor         | Yönetici her çeyrek sonunda skoru girer; sayfa birkaç saniyede bir yenilenir (WebSocket yok). |
+| Transfer                 | Oyuncunun takımı değişir ve transfer kaydı aynı transaction içinde oluşur.                    |
+| İstatistik liderleri     | Onaylı maçlardan maç başına sayı ortalaması (PPG = toplam sayı / oynanan maç).                |
+
+**Kapsam dışı:** EuroLeague'in resmî kuralları, playoff ve Final Four, faul ve ceza takibi, maç simülasyonu,
+otomatik veri çekme (scraping), logo ve resmî görseller, oyuncuların ek kişisel verileri.
+
+---
+
+## Lig kuralları
+
+EuroLeague'in resmî kuralları değil, **projenin kendi kuralları** geçerlidir.
+
+### Puanlama ve sıralama
+
+| Sonuç      | Puan |
+| ---------- | ---: |
+| Galibiyet  |    2 |
+| Mağlubiyet |    1 |
+
+Basketbolda beraberlik yoktur; normal süre eşit biterse 5 dakikalık uzatmalar oynanır. Puanı eşit takımlar şu
+zincirle ayrılır; bir adım eşitliği bozamazsa sonraki adıma geçilir:
+
+```mermaid
+flowchart LR
+    P["Puan"] --> H["İkili averaj<br/>aralarındaki maçlar"]
+    H --> G["Genel averaj<br/>atılan − yenilen"]
+    G --> A["Atılan sayı"]
+    A --> N["Takım adı<br/>A → Z"]
+```
+
+Örnek: 10 maçta 8 galibiyet ve 2 mağlubiyet alan takımın puanı `8 × 2 + 2 × 1 = 18` olur.
+
+### Fikstür
+
+Fikstür, circle method (round-robin) algoritmasıyla üretilir ([ADR-0008](docs/adr/0008-fikstur-algoritmasi.md)).
+
+- Her takım diğer her takımla iki kez karşılaşır; ikinci yarıda ev sahibi ve deplasman yer değiştirir.
+- Bir takım aynı turda iki maç oynamaz. Takım sayısı tekse her tur bir takım bay geçer.
+- Çift sayıda `n` takım için `2(n − 1)` tur ve `n(n − 1)` maç oluşur. Örneğin 18 takım: 34 tur, 306 maç.
+
+Dört takımlı örnek (ilk yazılan ev sahibi):
+
+| Tur | 1. maç | 2. maç |
+| :-: | :----: | :----: |
+|  1  | A – D  | C – B  |
+|  2  | C – A  | B – D  |
+|  3  | A – B  | D – C  |
+|  4  | D – A  | B – C  |
+|  5  | A – C  | D – B  |
+|  6  | B – A  | C – D  |
+
+### Maç ve skor kuralları
+
+- Maç 4 × 10 dakika, uzatma 5 dakikadır (bilgi amaçlı; süre takibi yapılmaz).
+- Skor ve sayılar negatif olamaz.
+- Maç skoru çeyrek skorlarının toplamına, takım skoru oyuncu sayılarının toplamına eşit olmalıdır.
+- Forma numarası takım içinde tekildir (0–99). Pozisyonlar: `PG`, `SG`, `SF`, `PF`, `C`.
+
+Maç yaşam döngüsü; geçersiz geçişler (ör. `SCHEDULED → CONFIRMED`) iş kuralı hatası verir:
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> SCHEDULED
+    SCHEDULED --> LIVE: ilk çeyrek girildi
+    LIVE --> FINISHED: maç bitti
+    FINISHED --> CONFIRMED: yönetici onayladı
+    CONFIRMED --> [*]
+    note right of CONFIRMED: Skor kilitlenir, puan durumuna girer
+```
+
+---
+
+## Mimari
+
+Uygulama **katmanlı monolit** olarak tasarlandı: tek Maven modülü, tek WAR, tek PostgreSQL veritabanı, tek
+uygulama sunucusu (Payara Micro). Gerekçe ve değerlendirilen alternatifler (modüler monolit, hexagonal,
+vertical slice, mikroservis) [ADR-0001](docs/adr/0001-katmanli-mimari.md)'de anlatılır.
+
+```mermaid
+flowchart TB
+    browser["Tarayıcı<br/>HTML · CSS · JS"]
+    subgraph war["Payara Micro · basketball-league.war"]
+        direction TB
+        resource["resource<br/>HTTP ↔ DTO"]
+        service["service<br/>kullanım senaryosu · @Transactional"]
+        repository["repository<br/>JPA sorguları"]
+        entity["entity<br/>durum ve iş davranışları"]
+        domain["domain<br/>saf kurallar: fikstür, puanlama"]
+        dto["dto<br/>istek / yanıt record'ları"]
+        resource --> service
+        resource --> dto
+        service --> repository
+        service --> entity
+        service --> domain
+        service --> dto
+        repository --> entity
+        entity --> domain
+    end
+    db[("PostgreSQL 18")]
+    browser -->|REST / JSON| resource
+    repository -->|EntityManager| db
+```
+
+Oklar izin verilen bağımlılıkları gösterir; ters yöndeki her erişim mimari testlerde kırmızı yanar.
+
+| Paket        | Sorumluluk                                                                                       |
+| ------------ | ------------------------------------------------------------------------------------------------ |
+| `resource`   | HTTP isteğini servise, servis sonucunu HTTP yanıtına çevirir. Repository veya entity'ye erişmez. |
+| `service`    | Kullanım senaryosu, transaction sınırı ve entity ↔ DTO dönüşümü.                                 |
+| `repository` | `EntityManager` ile entity yükler, kaydeder, sorgular.                                           |
+| `entity`     | JPA entity'leri; durum değişiklikleri setter yerine `confirm()`, `transferTo()` gibi metotlarla. |
+| `domain`     | Framework'ten bağımsız saf kurallar ve `DomainException` hiyerarşisi. Yalnızca JDK'ya bağlıdır.  |
+| `dto`        | REST sözleşmesi. Entity hiçbir zaman REST'ten dönmez veya alınmaz.                               |
+| `exception`  | Hataları Problem Details yanıtına çeviren `ExceptionMapper`'lar.                                 |
+| `config`     | `RestApplication` (`/api`) ve `DataSourceConfig`; iş kuralı taşımaz.                             |
+
+### Transaction örneği: maç onayı
+
+Maç onayı tek bir `@Transactional` servis metodudur. Herhangi bir adım başarısız olursa değişikliklerin
+hepsi geri alınır; maç `FINISHED` kalır ve puan durumu bu maçı saymaz.
+
+```mermaid
+sequenceDiagram
+    actor Y as Yönetici
+    participant R as GameResource
+    participant S as GameService
+    participant G as Game
+    participant DB as PostgreSQL
+    Y->>R: Onay isteği
+    R->>S: confirm(gameId)
+    Note over S,DB: Transaction başlar
+    S->>DB: Maç, çeyrek skorları, oyuncu sayıları (tek seferde)
+    S->>G: confirm(...)
+    alt Skorlar tutarlı ve maç FINISHED
+        G-->>S: Durum CONFIRMED
+        S->>DB: Commit
+        R-->>Y: Başarılı yanıt
+    else Skor uyuşmazlığı veya yanlış durum
+        G-->>S: DomainException
+        S->>DB: Rollback
+        R-->>Y: 409 Problem Details
+    end
+```
+
+İkinci transaction örneği transferdir: oyuncunun takımı değişir ve transfer kaydı oluşur; kayıt oluşturulamazsa
+takım değişikliği de geri alınır.
+
+### Proje yapısı
+
+```text
+basketball-league-manager/
+├── docs/
+│   ├── adr/                  # Mimari karar kayıtları
+│   └── testing/              # Mimari test planı
+├── src/main/java/com/basketballleague/
+│   ├── config/               # RestApplication, DataSourceConfig
+│   ├── domain/               # FixtureGenerator, DomainException, record'lar
+│   ├── dto/
+│   ├── entity/
+│   ├── repository/
+│   ├── resource/
+│   └── service/
+├── src/main/resources/
+│   ├── META-INF/persistence.xml
+│   └── db/migration/         # Flyway migration'ları
+├── src/test/java/com/basketballleague/
+│   └── architecture/         # ArchUnit kuralları
+├── .env.example              # Yerel ortam değişkenleri şablonu
+└── pom.xml
+```
+
+---
+
+## Teknolojiler
+
+| Teknoloji                   | Sürüm                    | Kullanım                               |
+| --------------------------- | ------------------------ | -------------------------------------- |
+| Java (Temurin)              | 21                       | Programlama dili                       |
+| Jakarta EE Web API          | 11.0.0                   | JAX-RS, CDI, JPA, JTA, Bean Validation |
+| Payara Micro                | 7.2026.9                 | Uygulama sunucusu                      |
+| PostgreSQL                  | 18                       | Veritabanı (JDBC sürücüsü 42.7.14)     |
+| Maven Wrapper               | —                        | Derleme; ayrıca Maven kurmak gerekmez  |
+| JUnit 5 · AssertJ · Mockito | 5.14.4 · 3.27.7 · 5.24.0 | Birim testleri                         |
+| ArchUnit                    | 1.5.1                    | Mimari kuralların testi                |
+| JaCoCo                      | 0.8.15                   | Test kapsamı raporu                    |
+| Flyway (Maven eklentisi)    | 13.12.2                  | Şema migration'ları                    |
+| SLF4J + `slf4j-jdk14`       | 2.0.20                   | Loglama (ADR-0006)                     |
+
+**Planlanan:** Testcontainers (gerçek PostgreSQL ile entegrasyon testleri). Henüz `pom.xml`'de değildir.
+
+---
+
+## Kurulum ve çalıştırma
+
+### Gereksinimler
+
+- JDK 21
+- PostgreSQL 18
+- Payara Micro 7.2026.9 JAR dosyası ([indirme sayfası](https://www.payara.fish/downloads/))
+- Windows, macOS veya Linux
+
+### 1. Veritabanını oluşturun
+
+`psql` ile yönetici kullanıcısında çalıştırın. Şifreyi kendiniz belirleyin; gerçek şifre repoya yazılmaz.
+
+```sql
+CREATE USER basketball WITH PASSWORD '<yerel-sifreniz>';
+CREATE DATABASE basketball_league OWNER basketball;
+```
+
+### 2. Ortam değişkenlerini hazırlayın
+
+Bağlantı bilgileri kaynak koddan değil, ortam değişkenlerinden okunur:
+
+| Değişken      | Örnek                                                |
+| ------------- | ---------------------------------------------------- |
+| `DB_URL`      | `jdbc:postgresql://localhost:5432/basketball_league` |
+| `DB_USER`     | `basketball`                                         |
+| `DB_PASSWORD` | yerel veritabanı şifreniz                            |
+
+`.env.example` dosyasını `.env` adıyla kopyalayıp değerleri doldurun. `.env` git tarafından yok sayılır.
 
 ```bash
-# macOS / Linux
+cp .env.example .env
+```
+
+> [!IMPORTANT]
+> Payara `.env` dosyasını kendiliğinden okumaz. Değişkenleri, Payara'yı başlatacağınız terminale yükleyin.
+
+**macOS / Linux:**
+
+```bash
 set -a; source .env; set +a
 ```
 
+**Windows (PowerShell):**
+
 ```powershell
-# Windows (PowerShell)
 Get-Content .env | Where-Object { $_ -match '^[A-Z_]+=' } | ForEach-Object {
     $name, $value = $_ -split '=', 2
     Set-Item "env:$name" $value
 }
 ```
 
-If a variable is missing, the application is not deployed and `GET /api/ping` returns 404.
+### 3. Şemayı oluşturun (Flyway)
 
-### Database Migrations
-
-Schema changes are managed by [Flyway](https://flywaydb.org/). Migration files live
-in `src/main/resources/db/migration/` and follow the `V<number>__<description>.sql` naming
-convention. **PostgreSQL 18.x is required.**
-
-After loading the environment variables (see above), run the migrations:
-
-```powershell
-# Windows (PowerShell)
-.\mvnw.cmd flyway:migrate
-.\mvnw.cmd flyway:info
-```
+Tablolar `src/main/resources/db/migration/` altındaki Flyway migration'larıyla oluşturulur. Uygulama
+açılırken migration çalıştırmaz; ortam değişkenlerini yüklediğiniz aynı terminalde şunu çalıştırın:
 
 ```bash
-# macOS / Linux
-./mvnw flyway:migrate
-./mvnw flyway:info
+./mvnw flyway:migrate         # macOS / Linux
+.\mvnw.cmd flyway:migrate     # Windows
 ```
 
+`flyway:info` hangi migration'ların uygulandığını gösterir.
+
 > [!IMPORTANT]
-> Never edit a migration file that has already been applied. All changes must go into a new
-> `V<next>__<description>.sql` file.
+> Uygulanmış bir migration dosyası asla değiştirilmez; her değişiklik yeni bir `V<sıradaki>__<açıklama>.sql`
+> dosyasıyla yapılır. Değiştirilmiş dosya Flyway'in checksum doğrulamasında hata verir.
+
+### 4. Derleyin
+
+```bash
+./mvnw clean package        # macOS / Linux
+.\mvnw.cmd clean package    # Windows
+```
+
+WAR dosyası `target/basketball-league.war` olarak oluşur.
+
+### 5. Payara Micro ile başlatın
+
+Aynı terminalde, `<payara-micro.jar>` yerine indirdiğiniz JAR dosyasının yolunu yazın:
+
+```bash
+java -jar <payara-micro.jar> --deploy target/basketball-league.war --contextroot /basketball-league --nocluster
+```
+
+`--nocluster`, gereksiz Hazelcast kümesini ve macOS güvenlik duvarı uyarısını önler.
+
+### 6. Kontrol edin
+
+```bash
+curl http://localhost:8080/basketball-league/api/ping
+```
+
+```json
+{ "status": "UP", "timestamp": "2026-11-15T10:00:00Z" }
+```
+
+`timestamp` isteğin işlendiği andır (UTC).
+
+> [!TIP]
+> Ortam değişkenlerinden biri eksikse veya veritabanına bağlanılamıyorsa uygulama yüklenmez ve
+> `/api/ping` **404** döner. Payara'nın konsol çıktısındaki dağıtım hatasına bakın.
+
+---
+
+## Testler ve kalite
+
+```bash
+./mvnw -B clean verify        # macOS / Linux
+.\mvnw.cmd -B clean verify    # Windows
+```
+
+Bu komut derler, birim ve mimari testleri çalıştırır ve JaCoCo raporunu `target/site/jacoco/index.html`
+dosyasına yazar.
+
+**Mimari testler** ([ArchitectureTest](src/test/java/com/basketballleague/architecture/ArchitectureTest.java))
+derleyicinin yakalayamadığı kuralları korur:
+
+- Katman bağımlılıkları ADR-0001'deki tabloya uyar; her sınıf belgelenmiş bir pakettedir.
+- `domain` paketi `jakarta`, `javax` ve `java.sql` tiplerine bağımlı değildir.
+- `@Transactional` yalnızca `service` paketinde kullanılır.
+- Alan enjeksiyonu (`@Inject` alan) yoktur; bağımlılıklar kurucudan gelir.
+- Entity'lerde public setter yoktur.
+- Domain hataları tek bir `DomainException` tabanından türer.
+- `Instant.now()` gibi gizli saat çağrıları yerine `Clock` enjekte edilir.
+- `System.out`, `System.err` kullanılmaz; `util`, `common`, `helper`, `misc` paketi açılmaz.
+
+**GitHub Actions:** `main` ve `dev`'e her push ve PR'da derleme ve testler (`Build`), CodeQL güvenlik taraması,
+PR'lara boyut ve alan etiketleri.
+
+---
+
+## Hata yönetimi ve loglama
+
+Kararlar [ADR-0006](docs/adr/0006-hata-yonetimi-ve-loglama.md)'dadır. Hatalar
+[RFC 9457 Problem Details](https://www.rfc-editor.org/rfc/rfc9457) biçiminde
+(`application/problem+json`) döner. İstemciye istisna mesajı, SQL hatası veya stack trace gönderilmez.
+
+| Durum                                       | HTTP | Log seviyesi                        |
+| ------------------------------------------- | ---- | ----------------------------------- |
+| Doğrulama hatası, bozuk istek               | 400  | DEBUG                               |
+| Kayıt bulunamadı                            | 404  | DEBUG                               |
+| İş kuralı ihlali (`DomainException`)        | 409  | INFO                                |
+| Eşzamanlı güncelleme çakışması              | 409  | INFO                                |
+| Veri bütünlüğü ihlali (unique, foreign key) | 409  | WARN                                |
+| Beklenmeyen hata                            | 500  | ERROR (stack trace yalnızca burada) |
+
+```json
+{
+    "type": "about:blank",
+    "title": "Conflict",
+    "status": 409,
+    "detail": "Fikstür için birbirinden farklı en az iki takım gerekir.",
+    "code": "INVALID_FIXTURE_INPUT"
+}
+```
+
+---
+
+## Veri kaynağı
+
+Takım ve oyuncu verisi elle hazırlanıp Flyway seed migration'ına yazılacaktır. Otomatik veri çekme veya canlı
+veri API'si kullanılmaz.
+
+| Bilgi                                | Değer                                                                  |
+| ------------------------------------ | ---------------------------------------------------------------------- |
+| Kapsam                               | Tek EuroLeague sezonu, o sezonda tek bir referans tarihindeki kadrolar |
+| Oyuncu alanları                      | Ad, soyad, forma numarası, pozisyon                                    |
+| Referans sezonu ve tarihi            | Henüz seçilmedi (seed PR'ında eklenecek)                               |
+| Kaynak bağlantıları ve alınma tarihi | Seed PR'ında eklenecek                                                 |
+| Maç sonuçları, transferler           | Uygulamada üretilen demo verisi                                        |
+
+---
+
+## Mimari karar kayıtları (ADR)
+
+| ADR                                                   | Konu                                                               | Durum        |
+| ----------------------------------------------------- | ------------------------------------------------------------------ | ------------ |
+| [ADR-0001](docs/adr/0001-katmanli-mimari.md)          | Katmanlı monolit, EuroLeague veri kapsamı, puan durumunu hesaplama | Kabul edildi |
+| [ADR-0006](docs/adr/0006-hata-yonetimi-ve-loglama.md) | Hata yönetimi ve loglama politikası                                | Kabul edildi |
+| [ADR-0008](docs/adr/0008-fikstur-algoritmasi.md)      | Fikstür üretimi için circle method                                 | Kabul edildi |
+
+Mimari kuralların nasıl doğrulanacağı [mimari test planı](docs/testing/mimari-test-plani.md)'nda yer alır.
+
+---
+
+## Çalışma düzeni
+
+- Her iş `dev` dalından açılan bir dalda yapılır: `feature/…`, `docs/…`, `chore/…`, `fix/…`.
+- PR'lar `dev`'e açılır; CI yeşil olunca ve inceleme onayından sonra **merge commit** ile birleştirilir.
+- Bir PR tek iş içerir; üretim kodu yaklaşık 400 satırı geçerse bölünür.
+- Commit mesajı: İngilizce tür, Türkçe açıklama ve maddeli gövde.
+
+```text
+feat(fixture): çift devreli fikstür üreticisini ekle
+
+- Circle method ile ilk yarıyı, ev/deplasman değişimiyle ikinci yarıyı üretiyor
+- Neden: fikstürün elle hazırlanmasını ve tekrar eden eşleşmeleri önlemek
+```
+
+---
+
+## Ekip
+
+| Ad            | GitHub                                         |
+| ------------- | ---------------------------------------------- |
+| Ömer Ünlü     | [@OmerCN1](https://github.com/OmerCN1)         |
+| Osman Balcı   | [@OsmanBlc](https://github.com/OsmanBlc)       |
+| Mustafa Budak | [@Mustafabdk7](https://github.com/Mustafabdk7) |
+
+Doğuş Üniversitesi, _Java Tabanlı Kurumsal Yazılım Geliştirme_ dersi dönem projesi. Eğitim amaçlıdır; resmî bir
+EuroLeague ürünü değildir. EuroLeague adı ve takım adları hak sahiplerine aittir.

@@ -1,6 +1,6 @@
-﻿---
+---
 title: ADR-0002-Jakarta EE 11 Web Profile ve Payara Micro Seçimi
-status: Kabul Edildi
+status: Önerildi
 date: 2026-11-18
 author: Mustafa Budak
 deciders: Ömer Ünlü, Osman Balcı, Mustafa Budak
@@ -20,9 +20,9 @@ kısıtlı dönem takvimi içinde ve ücretli bulut altyapısı/lisans bütçesi
 fikstür oluşturma, skor kaydı, transferler ve puan durumu hesaplama gibi iş süreçlerini yönetmektedir.
 
 Bu süreçlerin gerektirdiği teknik ihtiyaçlar şunlardır:
-1. **Veri Bütünlüğü ve Transaction Yönetimi:** Maç onaylama, puan durumu güncelleme ve transfer işlemleri birden fazla
-   tabloyu ve kaydı aynı anda etkiler. Bu işlemlerin ACID standartlarında, bildirimsel (declarative) transaction
-   yönetimiyle (`@Transactional`) korunması gerekir.
+1. **Veri Bütünlüğü ve Transaction Yönetimi:** Maç onaylama ve transfer işlemleri birden fazla tabloyu ve kaydı aynı
+   anda etkiler (puan durumu saklanmaz, onaylı maçlardan hesaplanır; ADR-0001). Bu işlemlerin ACID standartlarında,
+   bildirimsel (declarative) transaction yönetimiyle (`@Transactional`) korunması gerekir.
 2. **Standart REST API Desteği:** İstemci tarafındaki arayüzün (HTML/CSS/JS) sunucuyla tutarlı ve standart bir biçimde
    haberleşebilmesi için JAX-RS / Jakarta REST standartlarına ihtiyaç vardır.
 3. **Kalıcılık ve Doğrulama:** Veritabanı etkileşimleri için güçlü bir ORM (JPA) ve gelen isteklerin sınırda
@@ -37,7 +37,8 @@ Bu süreçlerin gerektirdiği teknik ihtiyaçlar şunlardır:
 
 ## Karar
 
-**Uygulama geliştirme standardı olarak Jakarta EE 11 Web Profile, çalıştırma ortamı (runtime) olarak Payara Micro 7.x ve temel dil sürümü olarak Java 21 LTS seçilmiştir.**
+**Uygulama geliştirme standardı olarak Jakarta EE 11 Web Profile, çalıştırma ortamı (runtime) olarak Payara Micro 7.x
+ve temel dil sürümü olarak Java 21 LTS seçilmiştir.**
 
 ### 1. Neden Jakarta EE 11 Web Profile?
 
@@ -57,9 +58,10 @@ standardıdır. Bu projede Full Profile yerine **Web Profile** spesifikasyon kü
   modern dil özellikleri (Records, Pattern Matching for switch, Sealed Classes, Sequenced Collections) kurumsal
   katmanlarda ve DTO modellerinde doğal olarak kullanılabilir.
 * **İnce Dağıtım Birimi (Thin WAR):** `pom.xml` dosyasında sadece `jakarta.jakartaee-web-api` (11.0.0) bağımlılığı
-  `provided` kapsamıyla (scope) eklenir. Framework kodları WAR içine gömülmez. Sonuç olarak üretilen `basketball-league.war`
-  dosyası 1 MB'ın altındadır; derleme saniyeler içinde tamamlanır ve ağ/disk maliyeti minimuma iner.
-* **Vendor Lock-in Riskini Önleme:** Kod, Spring Boot gibi tescilli bir çatının özel sınıflarına (`org.springframework.*`)
+  `provided` kapsamıyla (scope) eklenir. Framework kodları WAR içine gömülmez; WAR'da yalnızca PostgreSQL sürücüsü
+  ve SLF4J bulunur. Üretilen `basketball-league.war` yaklaşık 1,4 MB'tır; derleme saniyeler içinde tamamlanır ve
+  ağ/disk maliyeti minimuma iner.
+* **Vendor Lock-in Riskini Önleme:** Kod, Spring Boot gibi tek bir çatının özel sınıflarına (`org.springframework.*`)
   değil, resmi standart arayüzlere (`jakarta.*`) bağımlıdır. İleride çalışma ortamı WildFly, Open Liberty veya TomEE
   olarak değiştirilmek istense dahi uygulama kodu değişmeden çalışmaya devam eder.
 
@@ -91,7 +93,7 @@ yapılmıştır:
 
 | Alternatif | Güçlü Yönleri | Neden Seçilmedi? |
 | :--- | :--- | :--- |
-| **Spring Boot 3.x** | Çok geniş topluluk, zengin kütüphane ekosistemi, popüler hazır entegrasyonlar. | Dersin temel amacı olan açık Jakarta EE standartlarını değil, Spring'in tescilli (proprietary) çatısını zorlar. Kod Spring sınıflarına sıkı bağlanır; "Fat JAR" modeli yüzlerce megabaytlık bağımlılığı taşır ve `pom.xml` karmaşıklığını artırır. |
+| **Spring Boot 3.x** | Çok geniş topluluk, zengin kütüphane ekosistemi, popüler hazır entegrasyonlar. | Dersin temel amacı olan Jakarta EE standartlarını değil, Spring'in kendi programlama modelini öğretir (Spring açık kaynaktır ama bir standart değil, tek bir çatıdır). Kod Spring sınıflarına sıkı bağlanır; "Fat JAR" modeli yüzlerce megabaytlık bağımlılığı taşır ve `pom.xml` karmaşıklığını artırır. |
 | **Quarkus / Micronaut** | Süper hızlı açılış süresi, GraalVM native imaj desteği, çok düşük bellek. | Tam bir Jakarta EE Web Profile sunucusu değildir. Derleme anı kod zenginleştirmesi (build-time augmentation) kullanır; bazı standart CDI/JPA dinamik davranışları standart dışı kısıtlamalara tabidir. Akademik ders müfredatıyla birebir örtüşmez. |
 | **Apache Tomcat / Jetty (Yalın Servlet)** | Çok hafif, sadece HTTP ve Servlet motoru barındırır. | Yalnızca Servlet konteyneridir. CDI, JAX-RS, JPA, Bean Validation ve JTA sunmaz. Bu yetenekleri kazandırmak için Jersey, Weld/OpenWebBeans, Hibernate ve JTA yöneticisinin tek tek WAR içine eklenmesi gerekir ("kendi sunucunu kendin yap" maliyeti ve uyumsuzluk riski). |
 | **WildFly / GlassFish (Full Server)** | Eksiksiz yönetim konsolları, geniş kurumsal kümeleme yetenekleri. | Hantal ve ağırdır. Geliştiricilerin işletim sistemine sunucu kurmasını, port çakışmalarını yönetmesini ve XML konfigürasyonlarıyla uğraşmasını gerektirir. Küçük bir ekip için gereksiz bilişsel ve işletimsel yük oluşturur. |
@@ -101,9 +103,9 @@ yapılmıştır:
 ## Kararın Sonuçları
 
 ### Olumlu Sonuçlar (Kazançlar)
-1. **Temiz ve Yalın Bağımlılık Ağacı:** `pom.xml` dosyasında yalnızca API arayüzü (`jakarta.jakartaee-web-api`) ve
-   test kütüphaneleri (JUnit 5, AssertJ, Mockito, ArchUnit) bulunur. Üretim bağımlılıklarında sürüm çakışması (jar hell)
-   yaşanmaz.
+1. **Temiz ve Yalın Bağımlılık Ağacı:** Jakarta API'leri tek bir `provided` bağımlılıkla (`jakarta.jakartaee-web-api`)
+   gelir; WAR'a yalnızca PostgreSQL sürücüsü ve SLF4J girer. Uygulama sunucusunun sağladığı API'lerle sürüm çakışması
+   (jar hell) yaşanmaz.
 2. **Geliştirici Bağımsızlığı:** Kod herhangi bir işletim sisteminde (Windows, macOS, Linux) ve CI ortamında sadece
    Java 21 ve Maven ile derlenir; WAR dosyası taşınabilirdir.
 3. **Mimarinin Korunması:** ADR-0001 gereğince `domain` katmanı sıfır framework bağımlılığıyla korunurken
@@ -129,7 +131,7 @@ Bu kararın koddaki yansımaları ve kuralları aşağıdaki yöntemlerle doğru
 
 1. **ArchUnit Mimarisi Testleri (`ArchitectureTest.java`):**
    - `DOMAIN_IS_FRAMEWORK_FREE`: `com.basketballleague.domain..` paketi altındaki hiçbir sınıfın `jakarta..`, `javax..`
-     veya `java.sql..` paketlerine bağımlı olamayacağı derleme aşamasında doğrulanır.
+     veya `java.sql..` paketlerine bağımlı olamayacağı her build'in test aşamasında doğrulanır.
    - `TRANSACTIONAL_ONLY_IN_SERVICE`: `@Transactional` anotasyonunun yalnızca Service katmanında yer alabileceği
      garanti edilir.
    - `NO_FIELD_INJECTION`: CDI bağımlılık enjeksiyonunun alan üzerinden değil, yapıcı metot (constructor injection)

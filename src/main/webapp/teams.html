@@ -2,195 +2,82 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Takımlar &amp; Kadrolar | Basketball League Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Takımlar ve kadrolar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Instrument+Sans:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="css/teams.css">
+    <script src="js/teams.js" defer></script>
 </head>
 <body>
+<header class="masthead">
+    <a class="masthead-title" href="teams.html">Basketbol Ligi</a>
+    <nav aria-label="Bölümler">
+        <a href="teams.html" aria-current="page">Takımlar</a>
+    </nav>
+</header>
 
-    <!-- Üst Gezinme -->
-    <header class="site-header" role="banner">
-        <div class="header-row">
-            <a href="index.html" class="brand-link" aria-label="Basketball League Manager Ana Sayfa">
-                <div class="brand-logo">BL</div>
-                <span class="brand-name">Basketball <span>League</span></span>
-            </a>
-
-            <nav class="main-nav" role="navigation" aria-label="Ana Menü">
-                <a href="index.html">Ana Sayfa</a>
-                <a href="teams.html" class="current" aria-current="page">Takımlar</a>
-                <a href="#" onclick="alert('Fikstür modülü (ADR-0008) yakında eklenecektir.'); return false;">
-                    Fikstür <span class="nav-soon">Yakında</span>
-                </a>
-                <a href="#" onclick="alert('Puan durumu onaylanmış maçlardan hesaplanacaktır.'); return false;">
-                    Puan Durumu <span class="nav-soon">Yakında</span>
-                </a>
-            </nav>
-
-            <div class="header-right">
-                <div class="api-indicator" title="REST API Durumu">
-                    <span id="api-dot" class="status-dot"></span>
-                    <span id="api-text">Bağlanıyor...</span>
-                    <button id="btn-refresh-api" title="Yenile" aria-label="API bağlantısını yenile">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
+<main class="layout">
+    <section class="index" aria-labelledby="index-heading">
+        <div class="index-head">
+            <h1 id="index-heading">Takımlar</h1>
+            <p class="index-count" id="team-count" aria-live="polite"></p>
         </div>
-    </header>
+        <label class="search">
+            <span class="visually-hidden">Takım veya şehir ara</span>
+            <input type="search" id="team-search" placeholder="Takım veya şehir ara" autocomplete="off">
+        </label>
+        <ol class="team-list" id="team-list" aria-label="Takım listesi"></ol>
+        <p class="notice" id="team-notice" hidden></p>
+    </section>
 
-    <!-- Sayfa Başlığı ve Filtreler -->
-    <div class="page-band">
-        <div class="page-band-inner">
-            <div class="page-heading-block">
-                <h1>Takımlar ve Oyuncu Kadroları</h1>
-                <p>Kulübü seçerek kadro listesini, mevkileri ve oyuncu profillerini inceleyin.</p>
-            </div>
-
-            <div class="page-filters">
-                <div class="search-wrap">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                    </svg>
-                    <input type="text" id="team-search-input" class="search-input"
-                           placeholder="Takım, şehir veya koç ara..." aria-label="Takım filtreleme">
-                </div>
-
-                <div class="country-tabs" role="group" aria-label="Ülke filtreleri">
-                    <button type="button" class="active" data-country="ALL">Tümü</button>
-                    <button type="button" data-country="Türkiye">Türkiye</button>
-                    <button type="button" data-country="İspanya">İspanya</button>
-                    <button type="button" data-country="Yunanistan">Yunanistan</button>
-                    <button type="button" data-country="Fransa">Fransa</button>
-                    <button type="button" data-country="İtalya">İtalya</button>
-                </div>
-            </div>
+    <section class="sheet" id="sheet" aria-live="polite" tabindex="-1">
+        <div class="sheet-empty" id="sheet-empty">
+            <p>Kadrosunu görmek için listeden bir takım seçin.</p>
         </div>
-    </div>
 
-    <!-- Ana İçerik -->
-    <main class="main-wrapper" role="main">
-        <div class="two-col">
-
-            <!-- Sol: Takımlar Listesi -->
-            <aside aria-label="Kulüpler Listesi">
-                <div class="teams-list-box">
-                    <div class="box-title-row">
-                        <span class="box-title">Kulüpler</span>
-                        <span id="teams-count-badge" class="count-pill">0</span>
-                    </div>
-                    <ul id="teams-list" class="teams-ul" role="listbox" aria-label="Takım seç">
-                        <!-- JS ile doldurulur -->
-                    </ul>
+        <article id="sheet-team" hidden>
+            <header class="sheet-head">
+                <span class="badge badge-large" id="sheet-badge" aria-hidden="true"></span>
+                <div>
+                    <h2 id="sheet-name"></h2>
+                    <p class="sheet-city" id="sheet-city"></p>
                 </div>
-            </aside>
+            </header>
 
-            <!-- Sağ: Takım Detayı ve Kadro -->
-            <section id="team-detail-pane" class="detail-stack" aria-label="Kulüp Detayı ve Kadro">
+            <table class="roster" id="roster" hidden>
+                <caption class="visually-hidden">Kadro, forma numarasına göre</caption>
+                <thead>
+                <tr>
+                    <th scope="col" class="col-number">No</th>
+                    <th scope="col">Oyuncu</th>
+                    <th scope="col" class="col-position">Pozisyon</th>
+                </tr>
+                </thead>
+                <tbody id="roster-body"></tbody>
+            </table>
+            <p class="notice" id="roster-notice" hidden></p>
+        </article>
+    </section>
+</main>
 
-                <!-- Kulüp Künyesi -->
-                <div id="team-hero-container">
-                    <!-- JS ile doldurulur -->
-                </div>
+<footer class="footnote">
+    <p>
+        Takım adları EuroLeague 2025-26 sezonundan alınmıştır. Kadrolar, skorlar ve puan durumu bu uygulamada
+        üretilen demo verisidir; resmî EuroLeague sonuçları değildir.
+    </p>
+</footer>
 
-                <!-- İstatistik Şeridi -->
-                <div id="team-stats-strip" class="stats-row">
-                    <!-- JS ile doldurulur -->
-                </div>
-
-                <!-- Kadro Paneli -->
-                <div class="roster-box">
-                    <div class="roster-toolbar">
-                        <div class="roster-title-row">
-                            <span class="roster-title">Kadro Listesi</span>
-                            <span id="roster-count-badge" class="count-pill">0</span>
-                        </div>
-
-                        <div class="roster-controls">
-                            <!-- Pozisyon Filtreleri -->
-                            <div class="pos-tabs" role="group" aria-label="Mevki filtresi">
-                                <button type="button" class="pos-tab-btn active" data-pos="ALL">Tümü</button>
-                                <button type="button" class="pos-tab-btn" data-pos="PG">PG</button>
-                                <button type="button" class="pos-tab-btn" data-pos="SG">SG</button>
-                                <button type="button" class="pos-tab-btn" data-pos="SF">SF</button>
-                                <button type="button" class="pos-tab-btn" data-pos="PF">PF</button>
-                                <button type="button" class="pos-tab-btn" data-pos="C">C</button>
-                            </div>
-
-                            <!-- Oyuncu Arama -->
-                            <div class="roster-search-wrap">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                                </svg>
-                                <input type="text" id="roster-search-input" class="roster-search"
-                                       placeholder="Oyuncu ara..." aria-label="Oyuncu filtreleme">
-                            </div>
-
-                            <!-- Görünüm Değiştirici -->
-                            <div class="view-toggle" role="group" aria-label="Görünüm modu">
-                                <button type="button" class="view-btn active" data-view="table" title="Tablo görünümü">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-                                    </svg>
-                                </button>
-                                <button type="button" class="view-btn" data-view="cards" title="Kart görünümü">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-                                        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Kadro İçerik Alanı -->
-                    <div id="roster-content-area">
-                        <!-- JS ile doldurulur -->
-                    </div>
-                </div>
-
-                <!-- Analiz Paneli -->
-                <div id="team-insights-card" class="analysis-box">
-                    <!-- JS ile doldurulur -->
-                </div>
-
-            </section>
-        </div>
-    </main>
-
-    <!-- Oyuncu Modal -->
-    <div id="player-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-player-title">
-        <div class="modal-box">
-            <div class="modal-header">
-                <span id="modal-player-title" class="modal-title">Oyuncu Profili</span>
-                <button type="button" id="btn-close-modal" class="modal-close-btn" aria-label="Kapat">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                </button>
-            </div>
-            <div id="modal-player-content" class="modal-body">
-                <!-- JS ile doldurulur -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Alt Bilgi -->
-    <footer class="site-footer" role="contentinfo">
-        <div class="footer-inner">
-            <div>
-                <strong>Basketball League Manager</strong> &bull; Katmanlı Monolit Mimari (ADR-0001)
-            </div>
-            <nav class="footer-nav">
-                <a href="index.html">Ana Sayfa</a>
-                <a href="teams.html">Takımlar</a>
-                <a href="api/ping" target="_blank" rel="noopener">Ping</a>
-            </nav>
-        </div>
-    </footer>
-
-    <script src="js/teams.js"></script>
+<template id="team-row">
+    <li>
+        <button type="button" class="team-row">
+            <span class="badge" aria-hidden="true"></span>
+            <span class="team-row-name"></span>
+            <span class="team-row-city"></span>
+        </button>
+    </li>
+</template>
 </body>
 </html>

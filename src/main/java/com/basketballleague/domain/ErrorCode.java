@@ -7,5 +7,8 @@ package com.basketballleague.domain;
 public enum ErrorCode {
     INVALID_FIXTURE_INPUT,
     INVALID_TEAM,
-    INVALID_PLAYER
+    INVALID_PLAYER,
+    TEAM_NOT_FOUND,
+    TEAM_NAME_TAKEN,
+    JERSEY_NUMBER_TAKEN
 }

@@ -3,7 +3,6 @@ package com.basketballleague.entity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.time.LocalDate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -57,7 +56,7 @@ class TeamTest {
     @DisplayName("getPlayers returns an unmodifiable collection")
     void playersListIsUnmodifiable() {
         Team team = new Team("Real Madrid", "Madrid");
-        Player player = new Player(team, "Facundo", "Campazzo", 7, Position.PG, LocalDate.of(1991, 3, 23));
+        Player player = new Player(team, "Facundo", "Campazzo", 7, Position.PG);
 
         assertThat(team.getPlayers()).containsExactly(player);
         assertThatThrownBy(() -> team.getPlayers().clear())

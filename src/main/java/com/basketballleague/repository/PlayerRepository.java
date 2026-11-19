@@ -49,16 +49,8 @@ public class PlayerRepository {
     public List<Player> findByTeamId(Long teamId) {
         Objects.requireNonNull(teamId, "Team id must not be null");
         return em.createQuery(
-                        "SELECT p FROM Player p WHERE p.team.id = :teamId ORDER BY p.jerseyNumber ASC NULLS LAST, p.lastName ASC",
-                        Player.class)
+                        "SELECT p FROM Player p WHERE p.team.id = :teamId ORDER BY p.jerseyNumber ASC", Player.class)
                 .setParameter("teamId", teamId)
-                .getResultList();
-    }
-
-    public List<Player> findFreeAgents() {
-        return em.createQuery(
-                        "SELECT p FROM Player p WHERE p.team IS NULL ORDER BY p.lastName ASC, p.firstName ASC",
-                        Player.class)
                 .getResultList();
     }
 

@@ -11,23 +11,24 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
-import java.util.Objects;
 
 /**
- * Basketball player entity.
- * State changes are expressed through intention-revealing methods (no public setters).
+ * Basketball player entity. A player always belongs to a team and holds only name, jersey number and position
+ * (ADR-0001 data scope). State changes are expressed through intention-revealing methods (no public setters).
  */
 @Entity
 @Table(name = "players")
 public class Player {
 
+    static final int MIN_JERSEY_NUMBER = 0;
+    static final int MAX_JERSEY_NUMBER = 99;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "team_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "team_id", nullable = false)
     private Team team;
 
     @Column(name = "first_name", nullable = false, length = 100)
@@ -36,113 +37,88 @@ public class Player {
     @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
-    @Column(name = "jersey_number")
-    private Integer jerseyNumber;
+    @Column(name = "jersey_number", nullable = false)
+    private int jerseyNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "position", length = 2)
+    @Column(name = "position", nullable = false, length = 2)
     private Position position;
-
-    @Column(name = "birth_date")
-    private LocalDate birthDate;
 
     /** Required by JPA. */
     protected Player() {
     }
 
-    /**
-     * Creates a free-agent player without a team.
-     */
-    public Player(String firstName, String lastName, Position position, LocalDate birthDate) {
-        this(null, firstName, lastName, null, position, birthDate);
-    }
-
-    /**
-     * Creates a player assigned to a team with a jersey number.
-     */
-    public Player(Team team, String firstName, String lastName, Integer jerseyNumber, Position position, LocalDate birthDate) {
+    public Player(Team team, String firstName, String lastName, int jerseyNumber, Position position) {
         this.firstName = requireNonBlank(firstName, "First name must not be blank");
         this.lastName = requireNonBlank(lastName, "Last name must not be blank");
-        this.position = position;
-        this.birthDate = birthDate;
-        if (team != null) {
-            assignToTeam(team, jerseyNumber);
-        } else {
-            validateJerseyNumber(jerseyNumber);
-            this.jerseyNumber = jerseyNumber;
-        }
+        this.position = requirePosition(position);
+        assignToTeam(requireTeam(team), jerseyNumber);
     }
 
     // --- Intention-revealing methods (ADR-0001: no public setters) ---
 
     /**
-     * Transfers this player to another team with an assigned jersey number.
-     * Corresponds to the intention-revealing transferTo domain action (ADR-0001).
+     * Moves this player to another team with the jersey number they will wear there.
      */
-    public void transferTo(Team newTeam, Integer newJerseyNumber) {
-        Objects.requireNonNull(newTeam, "New team must not be null");
-        assignToTeam(newTeam, newJerseyNumber);
+    public void transferTo(Team newTeam, int newJerseyNumber) {
+        assignToTeam(requireTeam(newTeam), newJerseyNumber);
     }
 
-    /**
-     * Releases this player from their current team, turning them into a free agent.
-     */
-    public void releaseFromTeam() {
-        if (this.team != null) {
-            this.team.internalPlayers().remove(this);
-            this.team = null;
-        }
-        this.jerseyNumber = null;
+    public void assignJerseyNumber(int number) {
+        this.jerseyNumber = requireValidJerseyNumber(number);
     }
 
-    /**
-     * Assigns or changes the jersey number for this player.
-     */
-    public void assignJerseyNumber(Integer number) {
-        validateJerseyNumber(number);
-        this.jerseyNumber = number;
-    }
-
-    /**
-     * Updates the player's on-court playing position.
-     */
     public void changePosition(Position newPosition) {
-        this.position = newPosition;
+        this.position = requirePosition(newPosition);
     }
 
-    /**
-     * Updates personal identification details.
-     */
-    public void updatePersonalInfo(String firstName, String lastName, LocalDate birthDate) {
-        this.firstName = requireNonBlank(firstName, "First name must not be blank");
-        this.lastName = requireNonBlank(lastName, "Last name must not be blank");
-        this.birthDate = birthDate;
+    public void rename(String newFirstName, String newLastName) {
+        this.firstName = requireNonBlank(newFirstName, "First name must not be blank");
+        this.lastName = requireNonBlank(newLastName, "Last name must not be blank");
     }
 
-    private void assignToTeam(Team newTeam, Integer number) {
-        validateJerseyNumber(number);
+    private void assignToTeam(Team newTeam, int number) {
+        int validNumber = requireValidJerseyNumber(number);
         if (this.team != null && !this.team.equals(newTeam)) {
             this.team.internalPlayers().remove(this);
         }
         this.team = newTeam;
-        this.jerseyNumber = number;
+        this.jerseyNumber = validNumber;
         if (!newTeam.internalPlayers().contains(this)) {
             newTeam.internalPlayers().add(this);
         }
     }
 
-    private static void validateJerseyNumber(Integer number) {
-        if (number != null && (number < 0 || number > 99)) {
-            throw new IllegalArgumentException("Jersey number must be between 0 and 99");
+    private static Team requireTeam(Team team) {
+        if (team == null) {
+            throw invalid("Team must not be null");
         }
+        return team;
+    }
+
+    private static Position requirePosition(Position position) {
+        if (position == null) {
+            throw invalid("Position must not be null");
+        }
+        return position;
+    }
+
+    private static int requireValidJerseyNumber(int number) {
+        if (number < MIN_JERSEY_NUMBER || number > MAX_JERSEY_NUMBER) {
+            throw invalid("Jersey number must be between 0 and 99, was " + number);
+        }
+        return number;
     }
 
     private static String requireNonBlank(String value, String message) {
-        Objects.requireNonNull(value, message);
-        if (value.isBlank()) {
-            throw new IllegalArgumentException(message);
+        if (value == null || value.isBlank()) {
+            throw invalid(message);
         }
         return value.strip();
+    }
+
+    private static RuntimeException invalid(String message) {
+        return new IllegalArgumentException(message);
     }
 
     // --- Queries / Getters ---
@@ -167,7 +143,7 @@ public class Player {
         return firstName + " " + lastName;
     }
 
-    public Integer getJerseyNumber() {
+    public int getJerseyNumber() {
         return jerseyNumber;
     }
 
@@ -175,18 +151,14 @@ public class Player {
         return position;
     }
 
-    public LocalDate getBirthDate() {
-        return birthDate;
-    }
-
-    public boolean isFreeAgent() {
-        return team == null;
-    }
-
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Player other = (Player) o;
         return id != null && id.equals(other.id);
     }
@@ -198,12 +170,7 @@ public class Player {
 
     @Override
     public String toString() {
-        return "Player{" +
-                "id=" + id +
-                ", name='" + getFullName() + '\'' +
-                ", jerseyNumber=" + jerseyNumber +
-                ", position=" + position +
-                ", team=" + (team != null ? team.getName() : "Free Agent") +
-                '}';
+        return "Player{id=" + id + ", name='" + getFullName() + "', jerseyNumber=" + jerseyNumber
+                + ", position=" + position + ", team=" + team.getName() + '}';
     }
 }

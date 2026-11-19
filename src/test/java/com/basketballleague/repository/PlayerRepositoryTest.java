@@ -12,7 +12,6 @@ import com.basketballleague.entity.Position;
 import com.basketballleague.entity.Team;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +33,8 @@ class PlayerRepositoryTest {
     @Mock
     private TypedQuery<Long> countQuery;
 
+    private final Team team = new Team("Fenerbahçe Beko", "İstanbul");
+
     private PlayerRepository repository;
 
     @BeforeEach
@@ -44,7 +45,7 @@ class PlayerRepositoryTest {
     @Test
     @DisplayName("Persists new player when ID is null")
     void savesNewPlayer() {
-        Player player = new Player("Tarik", "Biberovic", Position.SF, LocalDate.of(2001, 1, 28));
+        Player player = new Player(team, "Tarik", "Biberovic", 20, Position.SF);
 
         Player saved = repository.save(player);
 
@@ -55,7 +56,7 @@ class PlayerRepositoryTest {
     @Test
     @DisplayName("Merges existing player when ID is present")
     void mergesExistingPlayer() throws Exception {
-        Player player = new Player("Kostas", "Sloukas", Position.PG, null);
+        Player player = new Player(team, "Kostas", "Sloukas", 21, Position.PG);
         java.lang.reflect.Field idField = Player.class.getDeclaredField("id");
         idField.setAccessible(true);
         idField.set(player, 25L);
@@ -71,7 +72,7 @@ class PlayerRepositoryTest {
     @Test
     @DisplayName("Finds player by ID")
     void findsById() {
-        Player player = new Player("Kostas", "Sloukas", Position.PG, LocalDate.of(1990, 1, 15));
+        Player player = new Player(team, "Kostas", "Sloukas", 22, Position.PG);
         when(em.find(Player.class, 5L)).thenReturn(player);
 
         Optional<Player> found = repository.findById(5L);
@@ -83,8 +84,8 @@ class PlayerRepositoryTest {
     @DisplayName("Finds all players")
     void findsAll() {
         List<Player> players = List.of(
-                new Player("Facundo", "Campazzo", Position.PG, null),
-                new Player("Walter", "Tavares", Position.C, null));
+                new Player(team, "Facundo", "Campazzo", 23, Position.PG),
+                new Player(team, "Walter", "Tavares", 24, Position.C));
         when(em.createQuery(anyString(), eq(Player.class))).thenReturn(playerQuery);
         when(playerQuery.getResultList()).thenReturn(players);
 
@@ -96,8 +97,7 @@ class PlayerRepositoryTest {
     @Test
     @DisplayName("Finds players by team ID")
     void findsByTeamId() {
-        Team team = new Team("Fenerbahçe Beko", "İstanbul");
-        Player player = new Player(team, "Nigel", "Hayes-Davis", 11, Position.PF, null);
+        Player player = new Player(team, "Nigel", "Hayes-Davis", 11, Position.PF);
 
         when(em.createQuery(anyString(), eq(Player.class))).thenReturn(playerQuery);
         when(playerQuery.setParameter(eq("teamId"), any())).thenReturn(playerQuery);
@@ -109,22 +109,9 @@ class PlayerRepositoryTest {
     }
 
     @Test
-    @DisplayName("Finds free agent players")
-    void findsFreeAgents() {
-        Player freeAgent = new Player("John", "Wall", Position.PG, null);
-
-        when(em.createQuery(anyString(), eq(Player.class))).thenReturn(playerQuery);
-        when(playerQuery.getResultList()).thenReturn(List.of(freeAgent));
-
-        List<Player> result = repository.findFreeAgents();
-
-        assertThat(result).containsExactly(freeAgent);
-    }
-
-    @Test
     @DisplayName("Finds players by playing position")
     void findsByPosition() {
-        Player center = new Player("Jan", "Vesely", Position.C, null);
+        Player center = new Player(team, "Jan", "Vesely", 25, Position.C);
 
         when(em.createQuery(anyString(), eq(Player.class))).thenReturn(playerQuery);
         when(playerQuery.setParameter(eq("position"), any())).thenReturn(playerQuery);
@@ -138,7 +125,7 @@ class PlayerRepositoryTest {
     @Test
     @DisplayName("Deletes player from persistence context")
     void deletesPlayer() {
-        Player player = new Player("Test", "Player", Position.SG, null);
+        Player player = new Player(team, "Test", "Player", 26, Position.SG);
         when(em.contains(player)).thenReturn(true);
 
         repository.delete(player);

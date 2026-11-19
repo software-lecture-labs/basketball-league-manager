@@ -8,6 +8,6 @@ public final class InvalidFixtureInputException extends DomainException {
     private static final long serialVersionUID = 1L;
 
     public InvalidFixtureInputException(String message) {
-        super(message);
+        super(ErrorCode.INVALID_FIXTURE_INPUT, message);
     }
 }

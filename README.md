@@ -417,11 +417,12 @@ veri API'si kullanılmaz.
 
 ## Mimari karar kayıtları (ADR)
 
-| ADR                                                   | Konu                                                               | Durum        |
-| ----------------------------------------------------- | ------------------------------------------------------------------ | ------------ |
-| [ADR-0001](docs/adr/0001-katmanli-mimari.md)          | Katmanlı monolit, EuroLeague veri kapsamı, puan durumunu hesaplama | Kabul edildi |
-| [ADR-0006](docs/adr/0006-hata-yonetimi-ve-loglama.md) | Hata yönetimi ve loglama politikası                                | Kabul edildi |
-| [ADR-0008](docs/adr/0008-fikstur-algoritmasi.md)      | Fikstür üretimi için circle method                                 | Kabul edildi |
+| ADR                                                     | Konu                                                               | Durum        |
+| ------------------------------------------------------- | ------------------------------------------------------------------ | ------------ |
+| [ADR-0001](docs/adr/0001-katmanli-mimari.md)            | Katmanlı monolit, EuroLeague veri kapsamı, puan durumunu hesaplama | Kabul edildi |
+| [ADR-0002](docs/adr/0002-jakarta-ee-ve-payara-micro.md) | Jakarta EE 11 Web Profile ve Payara Micro                          | Önerildi     |
+| [ADR-0006](docs/adr/0006-hata-yonetimi-ve-loglama.md)   | Hata yönetimi ve loglama politikası                                | Kabul edildi |
+| [ADR-0008](docs/adr/0008-fikstur-algoritmasi.md)        | Fikstür üretimi için circle method                                 | Kabul edildi |
 
 Mimari kuralların nasıl doğrulanacağı [mimari test planı](docs/testing/mimari-test-plani.md)'nda yer alır.
 

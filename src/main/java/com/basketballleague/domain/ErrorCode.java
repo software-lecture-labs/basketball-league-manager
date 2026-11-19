@@ -5,5 +5,7 @@ package com.basketballleague.domain;
  * of a problem details response, so a value must not be renamed once clients use it.
  */
 public enum ErrorCode {
-    INVALID_FIXTURE_INPUT
+    INVALID_FIXTURE_INPUT,
+    INVALID_TEAM,
+    INVALID_PLAYER
 }

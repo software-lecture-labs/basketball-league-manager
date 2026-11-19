@@ -1,5 +1,6 @@
 package com.basketballleague.entity;
 
+import com.basketballleague.domain.InvalidPlayerException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -117,8 +118,8 @@ public class Player {
         return value.strip();
     }
 
-    private static RuntimeException invalid(String message) {
-        return new IllegalArgumentException(message);
+    private static InvalidPlayerException invalid(String message) {
+        return new InvalidPlayerException(message);
     }
 
     // --- Queries / Getters ---

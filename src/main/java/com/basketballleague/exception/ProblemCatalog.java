@@ -19,6 +19,9 @@ final class ProblemCatalog {
     static String detailFor(ErrorCode code) {
         return switch (code) {
             case INVALID_FIXTURE_INPUT -> "Fikstür için birbirinden farklı en az iki takım gerekir.";
+            case INVALID_TEAM -> "Takım adı ve şehri boş olamaz.";
+            case INVALID_PLAYER ->
+                    "Oyuncunun adı, soyadı, takımı ve pozisyonu zorunludur; forma numarası 0-99 arasında olmalıdır.";
         };
     }
 

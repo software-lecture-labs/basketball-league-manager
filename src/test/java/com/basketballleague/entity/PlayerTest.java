@@ -3,6 +3,7 @@ package com.basketballleague.entity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.basketballleague.domain.InvalidPlayerException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -10,7 +11,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class PlayerTest {
 
-    private static final Class<? extends RuntimeException> INVALID = IllegalArgumentException.class;
+    private static final Class<InvalidPlayerException> INVALID = InvalidPlayerException.class;
 
     private final Team team = new Team("Fenerbahçe Beko", "İstanbul");
 

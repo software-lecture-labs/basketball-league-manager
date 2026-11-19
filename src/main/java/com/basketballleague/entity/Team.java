@@ -1,5 +1,6 @@
 package com.basketballleague.entity;
 
+import com.basketballleague.domain.InvalidTeamException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,7 +12,6 @@ import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Basketball team entity.
@@ -76,17 +76,20 @@ public class Team {
     }
 
     private static String requireNonBlank(String value, String message) {
-        Objects.requireNonNull(value, message);
-        if (value.isBlank()) {
-            throw new IllegalArgumentException(message);
+        if (value == null || value.isBlank()) {
+            throw new InvalidTeamException(message);
         }
         return value.strip();
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Team other = (Team) o;
         return id != null && id.equals(other.id);
     }
@@ -98,10 +101,6 @@ public class Team {
 
     @Override
     public String toString() {
-        return "Team{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", city='" + city + '\'' +
-                '}';
+        return "Team{id=" + id + ", name='" + name + "', city='" + city + "'}";
     }
 }

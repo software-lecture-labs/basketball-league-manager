@@ -3,6 +3,7 @@ package com.basketballleague.entity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.basketballleague.domain.InvalidTeamException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,16 +23,16 @@ class TeamTest {
     @DisplayName("Rejects null or blank name and city")
     void rejectsInvalidCreationParameters() {
         assertThatThrownBy(() -> new Team(null, "İstanbul"))
-                .isInstanceOf(NullPointerException.class);
+                .isInstanceOf(InvalidTeamException.class);
 
         assertThatThrownBy(() -> new Team("   ", "İstanbul"))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidTeamException.class);
 
         assertThatThrownBy(() -> new Team("Anadolu Efes", null))
-                .isInstanceOf(NullPointerException.class);
+                .isInstanceOf(InvalidTeamException.class);
 
         assertThatThrownBy(() -> new Team("Anadolu Efes", ""))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidTeamException.class);
     }
 
     @Test

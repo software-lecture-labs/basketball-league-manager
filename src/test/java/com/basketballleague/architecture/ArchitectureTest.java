@@ -98,14 +98,12 @@ class ArchitectureTest {
             .should().beAnnotatedWith(Inject.class)
             .because("dependencies are passed through the constructor (ADR-0001)");
 
-    // The entity package has no classes yet; remove allowEmptyShould when the first entity is added.
     @ArchTest
     static final ArchRule ENTITIES_HAVE_NO_PUBLIC_SETTERS = noMethods()
             .that().areDeclaredInClassesThat().resideInAPackage(ENTITY)
             .and().arePublic()
             .should().haveNameMatching("set[A-Z].*")
-            .because("entity state changes through intention-revealing methods such as confirm() (ADR-0001)")
-            .allowEmptyShould(true);
+            .because("entity state changes through intention-revealing methods such as confirm() (ADR-0001)");
 
     @ArchTest
     static final ArchRule DOMAIN_EXCEPTIONS_SHARE_ONE_BASE = classes()

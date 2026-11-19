@@ -7,6 +7,8 @@
     <persistence-unit name="basketballPU" transaction-type="JTA">
         <!-- Defined by @DataSourceDefinition in com.basketballleague.config.DataSourceConfig -->
         <jta-data-source>java:app/jdbc/basketballLeague</jta-data-source>
+        <class>com.basketballleague.entity.Team</class>
+        <class>com.basketballleague.entity.Player</class>
         <exclude-unlisted-classes>false</exclude-unlisted-classes>
         <properties>
             <property name="jakarta.persistence.schema-generation.database.action" value="none"/>

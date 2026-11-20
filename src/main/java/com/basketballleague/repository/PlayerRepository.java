@@ -15,6 +15,8 @@ import java.util.Optional;
 @ApplicationScoped
 public class PlayerRepository {
 
+    private static final String TEAM_ID = "teamId";
+
     private final EntityManager em;
 
     /** Required by CDI to create the proxy; never used to serve calls. */
@@ -27,10 +29,15 @@ public class PlayerRepository {
         this.em = Objects.requireNonNull(em, "EntityManager must not be null");
     }
 
+    /**
+     * Inserts a new player or merges an existing one. A new player is flushed at once, so its generated id is
+     * available to the caller before the transaction commits (the identity column is filled by the INSERT).
+     */
     public Player save(Player player) {
         Objects.requireNonNull(player, "Player must not be null");
         if (player.getId() == null) {
             em.persist(player);
+            em.flush();
             return player;
         }
         return em.merge(player);
@@ -51,8 +58,35 @@ public class PlayerRepository {
         Objects.requireNonNull(teamId, "Team id must not be null");
         return em.createQuery(
                         "SELECT p FROM Player p WHERE p.team.id = :teamId ORDER BY p.jerseyNumber ASC", Player.class)
-                .setParameter("teamId", teamId)
+                .setParameter(TEAM_ID, teamId)
                 .getResultList();
+    }
+
+    /**
+     * One page of a team's players ordered by jersey number, which is unique within a team.
+     */
+    public List<Player> findPageByTeamId(long teamId, int firstResult, int maxResults) {
+        return em.createQuery(
+                        "SELECT p FROM Player p WHERE p.team.id = :teamId ORDER BY p.jerseyNumber ASC", Player.class)
+                .setParameter(TEAM_ID, teamId)
+                .setFirstResult(firstResult)
+                .setMaxResults(maxResults)
+                .getResultList();
+    }
+
+    public long countByTeamId(long teamId) {
+        return em.createQuery("SELECT COUNT(p) FROM Player p WHERE p.team.id = :teamId", Long.class)
+                .setParameter(TEAM_ID, teamId)
+                .getSingleResult();
+    }
+
+    public boolean existsByTeamIdAndJerseyNumber(long teamId, int jerseyNumber) {
+        return em.createQuery(
+                        "SELECT COUNT(p) FROM Player p WHERE p.team.id = :teamId AND p.jerseyNumber = :jerseyNumber",
+                        Long.class)
+                .setParameter(TEAM_ID, teamId)
+                .setParameter("jerseyNumber", jerseyNumber)
+                .getSingleResult() > 0;
     }
 
     public List<Player> findByPosition(Position position) {

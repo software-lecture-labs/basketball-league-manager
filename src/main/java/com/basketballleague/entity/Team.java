@@ -32,7 +32,7 @@ public class Team {
     private String city;
 
     @OneToMany(mappedBy = "team", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private final List<Player> players = new ArrayList<>();
+    private List<Player> players = new ArrayList<>();
 
     /** Required by JPA. */
     protected Team() {

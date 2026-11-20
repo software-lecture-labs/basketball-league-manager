@@ -14,6 +14,7 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.CompositeArchRule;
 import jakarta.inject.Inject;
+import jakarta.persistence.Entity;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -104,6 +105,15 @@ class ArchitectureTest {
             .and().arePublic()
             .should().haveNameMatching("set[A-Z].*")
             .because("entity state changes through intention-revealing methods such as confirm() (ADR-0001)");
+
+    // EclipseLink fills persistent fields after construction; a final field fails at runtime with IllegalAccessError,
+    // which unit tests without a JPA provider do not notice.
+    @ArchTest
+    static final ArchRule ENTITY_FIELDS_ARE_NOT_FINAL = noFields()
+            .that().areDeclaredInClassesThat().areAnnotatedWith(Entity.class)
+            .and().areNotStatic()
+            .should().beFinal()
+            .because("the JPA provider sets persistent fields after the entity is constructed (Jakarta Persistence §2.1)");
 
     @ArchTest
     static final ArchRule DOMAIN_EXCEPTIONS_SHARE_ONE_BASE = classes()

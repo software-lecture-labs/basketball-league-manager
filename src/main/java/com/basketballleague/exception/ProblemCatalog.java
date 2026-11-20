@@ -22,6 +22,9 @@ final class ProblemCatalog {
             case INVALID_TEAM -> "Takım adı ve şehri boş olamaz.";
             case INVALID_PLAYER ->
                     "Oyuncunun adı, soyadı, takımı ve pozisyonu zorunludur; forma numarası 0-99 arasında olmalıdır.";
+            case TEAM_NOT_FOUND -> "İstenen takım bulunamadı.";
+            case TEAM_NAME_TAKEN -> "Bu adda bir takım zaten var.";
+            case JERSEY_NUMBER_TAKEN -> "Bu forma numarası takımda başka bir oyuncu tarafından kullanılıyor.";
         };
     }
 

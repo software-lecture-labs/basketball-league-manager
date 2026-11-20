@@ -202,6 +202,7 @@ takım değişikliği de geri alınır.
 basketball-league-manager/
 ├── docs/
 │   ├── adr/                  # Mimari karar kayıtları
+│   ├── api.md                # REST API sözleşmesi
 │   └── testing/              # Mimari test planı
 ├── src/main/java/com/basketballleague/
 │   ├── config/               # RestApplication, DataSourceConfig

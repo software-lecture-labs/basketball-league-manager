@@ -226,10 +226,66 @@ Sezon üyeliğinin kendi adresi olmadığı için `Location` başlığı gönder
 | 409 | `TEAM_ALREADY_IN_SEASON` | takım sezonda zaten var |
 | 409 | `SEASON_FULL` | sezonda 20 takım var |
 
+## Fikstür
+
+Fikstür sezonun takımlarından çift devreli olarak üretilir ([ADR-0008](adr/0008-fikstur-algoritmasi.md)):
+çift sayıda `n` takımda `2(n − 1)` tur ve `n(n − 1)` maç. Takım sayısı tekse her turda bir takım bay geçer.
+Fikstürü üretmek sezonu `ACTIVE` yapar; aynı sezon için ikinci kez üretilemez.
+
+### `GET /seasons/{id}/fixtures`
+
+Sezonun turlarını tur numarasına göre sıralı döner. Bir sezonda en fazla 20 takım olduğu için en fazla 38 tur
+ve 380 maç vardır; yanıt sayfalı değildir. Fikstürü üretilmemiş sezonda `rounds` boştur.
+
+```json
+200 OK
+{
+  "seasonId": 1,
+  "rounds": [
+    {
+      "number": 1,
+      "games": [
+        {
+          "id": 10,
+          "homeTeam": { "id": 1, "name": "Anadolu Efes", "city": "İstanbul" },
+          "awayTeam": { "id": 2, "name": "Fenerbahçe", "city": "İstanbul" },
+          "status": "SCHEDULED"
+        }
+      ],
+      "byeTeam": { "id": 3, "name": "Žalgiris", "city": "Kaunas" }
+    }
+  ]
+}
+```
+
+- Bir turdaki maçlar maç kimliğine göre sıralıdır; ilk yazılan takım ev sahibidir.
+- `byeTeam` yalnızca o turda bay geçen takım varsa (takım sayısı tekse) bulunur.
+- `status` değerleri: `SCHEDULED`, `LIVE`, `FINISHED`, `CONFIRMED`.
+
+| Durum | `code` |
+| --- | --- |
+| 404 | `SEASON_NOT_FOUND` |
+
+### `POST /seasons/{id}/fixtures`
+
+Gövde almaz. Fikstürü üretir, sezonu `ACTIVE` yapar ve üretilen fikstürü `GET` ile aynı biçimde döner.
+
+```text
+201 Created
+Location: http://localhost:8080/basketball-league/api/seasons/1/fixtures
+```
+
+| Durum | `code` | Ne zaman |
+| --- | --- | --- |
+| 404 | `SEASON_NOT_FOUND` | sezon yok |
+| 409 | `INVALID_FIXTURE_INPUT` | sezonda 2'den az takım var |
+| 409 | `SEASON_ALREADY_STARTED` | fikstür zaten üretilmiş |
+
 ## Bilinen sınırlar
 
 - Aynı ad veya forma numarası iki istekte aynı anda gönderilirse kontrolü ikisi de geçebilir; ikinci kayıt
   veritabanı kısıtına takılır. Bu durumun 409'a çevrilmesi #13'te. Aynı adla iki sezon için de geçerlidir.
-- Sezona takım ekleme sezon satırını kilitler (`SELECT … FOR UPDATE`); aynı sezona gelen eşzamanlı istekler
-  sırayla işlenir ve takım sınırı ile tekillik kuralı atlanamaz.
+- Sezona takım ekleme ve fikstür üretme sezon satırını kilitler (`SELECT … FOR UPDATE`); aynı sezona gelen
+  eşzamanlı istekler sırayla işlenir. Takım sınırı ve tekillik atlanamaz, fikstür iki kez üretilemez ve fikstür
+  üretilirken sezona takım eklenemez.
 - Liste sıralaması veritabanının sıralama kuralını (collation) kullanır; Türkçe `Collator` ile sıralama yoktur.

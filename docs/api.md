@@ -128,8 +128,108 @@ Oyuncunun kendi adresi (`/players/{id}`) henüz olmadığı için `Location` ba�
 | 404 | `TEAM_NOT_FOUND` | takım yok |
 | 409 | `JERSEY_NUMBER_TAKEN` | forma numarası bu takımda kullanılıyor |
 
+## Sezonlar
+
+Sezon `DRAFT` durumunda oluşturulur ve takımlar yalnızca bu durumda eklenir. Fikstür üretilince sezon `ACTIVE`
+olur ve takım listesi artık değişmez ([ADR-0003](adr/0003-entity-domain-modeli.md)). `status` değerleri:
+`DRAFT`, `ACTIVE`, `FINISHED`. `startDate` ISO-8601 tarihtir (`YYYY-AA-GG`).
+
+### `GET /seasons`
+
+Sezonları başlangıç tarihine göre yeniden eskiye, sayfalı listeler.
+
+```json
+200 OK
+{
+  "items": [ { "id": 1, "name": "2026-27 Demo Sezonu", "startDate": "2026-10-01", "status": "DRAFT" } ],
+  "page": 0, "size": 20, "totalItems": 1
+}
+```
+
+### `GET /seasons/{id}`
+
+```json
+200 OK
+{ "id": 1, "name": "2026-27 Demo Sezonu", "startDate": "2026-10-01", "status": "DRAFT" }
+```
+
+| Durum | `code` |
+| --- | --- |
+| 404 | `SEASON_NOT_FOUND` |
+
+### `POST /seasons`
+
+```json
+{ "name": "2026-27 Demo Sezonu", "startDate": "2026-10-01" }
+```
+
+```text
+201 Created
+Location: http://localhost:8080/basketball-league/api/seasons/1
+```
+
+```json
+{ "id": 1, "name": "2026-27 Demo Sezonu", "startDate": "2026-10-01", "status": "DRAFT" }
+```
+
+| Alan | Kural |
+| --- | --- |
+| `name` | zorunlu, en fazla 100 karakter, sezonlar arasında tekil (baştaki/sondaki boşluk atılır) |
+| `startDate` | zorunlu, `YYYY-AA-GG` |
+
+| Durum | `code` | Ne zaman |
+| --- | --- | --- |
+| 400 | `VALIDATION_FAILED` | alan kuralı ihlali |
+| 400 | `MALFORMED_REQUEST` | gövde yok, JSON olarak okunamıyor veya tarih geçersiz (ör. `2026-02-30`) |
+| 409 | `SEASON_NAME_TAKEN` | aynı adda sezon var |
+
+### `GET /seasons/{id}/teams`
+
+Sezondaki takımları ada göre sıralı döner. Bir sezonda en fazla 20 takım olduğu için liste sayfalı değildir;
+yanıt bir dizidir.
+
+```json
+200 OK
+[ { "id": 1, "name": "Anadolu Efes", "city": "İstanbul" } ]
+```
+
+| Durum | `code` |
+| --- | --- |
+| 404 | `SEASON_NOT_FOUND` |
+
+### `POST /seasons/{id}/teams`
+
+Var olan bir takımı sezona ekler.
+
+```json
+{ "teamId": 1 }
+```
+
+```json
+201 Created
+{ "id": 1, "name": "Anadolu Efes", "city": "İstanbul" }
+```
+
+Sezon üyeliğinin kendi adresi olmadığı için `Location` başlığı gönderilmez.
+
+| Alan | Kural |
+| --- | --- |
+| `teamId` | zorunlu, 0'dan büyük |
+
+| Durum | `code` | Ne zaman |
+| --- | --- | --- |
+| 400 | `VALIDATION_FAILED` | alan kuralı ihlali |
+| 400 | `MALFORMED_REQUEST` | gövde yok veya JSON olarak okunamıyor |
+| 404 | `SEASON_NOT_FOUND` | sezon yok |
+| 404 | `TEAM_NOT_FOUND` | takım yok |
+| 409 | `SEASON_ALREADY_STARTED` | sezon `DRAFT` değil (fikstürü üretilmiş) |
+| 409 | `TEAM_ALREADY_IN_SEASON` | takım sezonda zaten var |
+| 409 | `SEASON_FULL` | sezonda 20 takım var |
+
 ## Bilinen sınırlar
 
 - Aynı ad veya forma numarası iki istekte aynı anda gönderilirse kontrolü ikisi de geçebilir; ikinci kayıt
-  veritabanı kısıtına takılır. Bu durumun 409'a çevrilmesi #13'te.
+  veritabanı kısıtına takılır. Bu durumun 409'a çevrilmesi #13'te. Aynı adla iki sezon için de geçerlidir.
+- Sezona takım ekleme sezon satırını kilitler (`SELECT … FOR UPDATE`); aynı sezona gelen eşzamanlı istekler
+  sırayla işlenir ve takım sınırı ile tekillik kuralı atlanamaz.
 - Liste sıralaması veritabanının sıralama kuralını (collation) kullanır; Türkçe `Collator` ile sıralama yoktur.

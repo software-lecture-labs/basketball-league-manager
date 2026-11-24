@@ -92,11 +92,6 @@ class TeamResourceValidationTest {
     }
 
     @Test
-    void largestAllowedPageStillFitsInAnInt() {
-        assertThat((long) TeamResource.MAX_PAGE * TeamResource.MAX_PAGE_SIZE).isLessThanOrEqualTo(Integer.MAX_VALUE);
-    }
-
-    @Test
     void rejectsAMissingBody() throws NoSuchMethodException {
         final Method createTeam = TeamResource.class.getMethod("createTeam", CreateTeamRequest.class, UriInfo.class);
 

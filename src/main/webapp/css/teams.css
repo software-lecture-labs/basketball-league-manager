@@ -318,6 +318,72 @@ h2 {
     margin: 0;
 }
 
+/* Standings table */
+.standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+}
+.standings-table th,
+.standings-table td {
+    padding: 0.35rem 0.5rem;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    vertical-align: middle;
+}
+.standings-table th {
+    background: var(--sheet);
+    font-weight: 600;
+    color: var(--ink-soft);
+}
+.standings-table .col-rank { width: 3rem; }
+.standings-table .col-team { width: 12rem; }
+.standings-table .col-played { width: 2rem; }
+.standings-table .col-won { width: 2rem; }
+.standings-table .col-lost { width: 2rem; }
+.standings-table .col-points { width: 3rem; }
+.standings-table .col-conceded { width: 3rem; }
+.standings-table .col-diff { width: 3rem; }
+.standings-table .col-pts { width: 3rem; }
+/* Highlight top 6 (playoff zone) */
+.standings-table tbody tr:nth-child(-n+6) td {
+    border-left: 4px solid var(--clock);
+    background: var(--sheet);
+}
+/* Match entry form */
+.match-form {
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    padding: 1rem;
+    border-radius: 4px;
+}
+.quarters-grid label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+.quarters-grid input[type="number"] {
+    width: 4rem;
+    padding: 0.2rem;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    text-align: right;
+}
+#btn-submit-game {
+    margin-top: 0.75rem;
+    padding: 0.4rem 1rem;
+    background: var(--clock);
+    color: var(--sheet);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+#btn-submit-game:hover { opacity: 0.9; }
+.notice {
+    margin-top: 0.5rem;
+    color: var(--ink-soft);
+}
 @media (max-width: 760px) {
     .layout {
         grid-template-columns: minmax(0, 1fr);

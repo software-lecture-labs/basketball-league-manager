@@ -3,11 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Basketbol Ligi</title>
-    <!-- Şimdilik tek sayfa takımlar sayfası; fikstür ve puan durumu sayfaları gelince burası ana sayfa olacak. -->
-    <meta http-equiv="refresh" content="0; url=teams.html">
+    <title>Puan Durumu - Basketbol Ligi</title>
+    <link rel="stylesheet" href="css/teams.css">
+    <script src="js/standings.js" defer></script>
 </head>
 <body>
-<p><a href="teams.html">Takımlar sayfasına git</a></p>
+<header class="masthead">
+    <a class="masthead-title" href="index.html">Basketbol Ligi</a>
+    <nav aria-label="Bölümler">
+        <a href="index.html" aria-current="page">Puan Durumu</a>
+        <a href="teams.html">Takımlar</a>
+    </nav>
+</header>
+<main class="layout">
+    <!-- Sol: Puan Durumu Tablosu -->
+    <section class="standings" aria-labelledby="standings-heading">
+        <div class="index-head">
+            <h1 id="standings-heading">Puan Durumu</h1>
+            <p class="index-count" id="standings-count" aria-live="polite"></p>
+        </div>
+        <table class="standings-table" id="standings-table">
+            <thead>
+                <tr>
+                    <th scope="col" class="col-rank">#</th>
+                    <th scope="col" class="col-team">Takım</th>
+                    <th scope="col" class="col-played">O</th>
+                    <th scope="col" class="col-won">G</th>
+                    <th scope="col" class="col-lost">M</th>
+                    <th scope="col" class="col-points">PF</th>
+                    <th scope="col" class="col-conceded">PA</th>
+                    <th scope="col" class="col-diff">±</th>
+                    <th scope="col" class="col-pts">LP</th>
+                </tr>
+            </thead>
+            <tbody id="standings-tbody"></tbody>
+        </table>
+        <p class="notice" id="standings-notice" hidden></p>
+    </section>
+    <!-- Sağ: Maç Sonucu Giriş Formu -->
+    <section class="match-form" aria-labelledby="match-heading">
+        <div class="index-head">
+            <h1 id="match-heading">Maç Sonucu Girişi</h1>
+        </div>
+        <form id="match-entry-form">
+            <label for="home-team">Ev Sahibi:</label>
+            <select id="home-team" required></select>
+            <label for="away-team">Deplasman:</label>
+            <select id="away-team" required></select>
+            <fieldset class="quarters-grid">
+                <legend>Çeyrek Skorları</legend>
+                <label>Q1 <input type="number" min="0" id="q1-home" required> – <input type="number" min="0" id="q1-away" required></label>
+                <label>Q2 <input type="number" min="0" id="q2-home" required> – <input type="number" min="0" id="q2-away" required></label>
+                <label>Q3 <input type="number" min="0" id="q3-home" required> – <input type="number" min="0" id="q3-away" required></label>
+                <label>Q4 <input type="number" min="0" id="q4-home" required> – <input type="number" min="0" id="q4-away" required></label>
+                <label>Uzatma <input type="number" min="0" id="ot-home" value="0"> – <input type="number" min="0" id="ot-away" value="0"></label>
+            </fieldset>
+            <p>Toplam: <span id="total-home">0</span> – <span id="total-away">0</span></p>
+            <button type="submit" id="btn-submit-game">Maçı Kaydet</button>
+            <p class="notice" id="form-notice" hidden></p>
+        </form>
+    </section>
+</main>
+<footer class="footnote">
+    <p>EuroLeague 2025‑26 sezonu demo verisi, gerçek sonuçlar değildir.</p>
+</footer>
 </body>
 </html>

@@ -1,0 +1,339 @@
+/* Takımlar sayfası: maç kâğıdı düzeni. Tek vurgu rengi seçili takımı gösteren sarı çubuktur. */
+
+:root {
+    color-scheme: light;
+    --paper: #f4f5f2;
+    --sheet: #ffffff;
+    --ink: #18233a;
+    --ink-soft: #4d586b;
+    --line: #d3d7cf;
+    --line-strong: #18233a;
+    --clock: #e3a21a;
+    --focus: #1f5fbf;
+    --display: "Big Shoulders Display", "Arial Narrow", "Helvetica Neue", sans-serif;
+    --text: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --gutter: clamp(16px, 4vw, 48px);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* Sınıflardaki display kuralları hidden özniteliğini ezmesin. */
+[hidden] {
+    display: none !important;
+}
+
+body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 1rem/1.5 var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+a {
+    color: inherit;
+}
+
+:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* Üst şerit */
+.masthead {
+    display: flex;
+    align-items: baseline;
+    gap: 2rem;
+    padding: 1.25rem var(--gutter);
+    border-bottom: 2px solid var(--line-strong);
+}
+
+.masthead-title {
+    font: 800 1.75rem/1 var(--display);
+    text-decoration: none;
+    letter-spacing: 0.01em;
+}
+
+.masthead nav a {
+    font-weight: 500;
+    text-decoration: none;
+    padding-bottom: 0.2rem;
+}
+
+.masthead nav a[aria-current="page"] {
+    border-bottom: 3px solid var(--clock);
+}
+
+/* İki sütun: takım listesi ve kadro */
+.layout {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+    gap: clamp(1.5rem, 4vw, 4rem);
+    padding: 2rem var(--gutter) 3rem;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.index-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+h1,
+h2 {
+    font-family: var(--display);
+    font-weight: 800;
+    line-height: 0.95;
+    margin: 0;
+}
+
+h1 {
+    font-size: 2.5rem;
+}
+
+.index-count {
+    margin: 0;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+}
+
+.search input {
+    width: 100%;
+    margin: 1rem 0 0.75rem;
+    padding: 0.6rem 0.75rem;
+    font: inherit;
+    color: inherit;
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+}
+
+.search input:focus-visible {
+    outline-offset: 0;
+    border-color: var(--focus);
+}
+
+.team-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+}
+
+.team-row {
+    display: grid;
+    grid-template-columns: 2.25rem 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 0.75rem;
+    align-items: center;
+    width: 100%;
+    padding: 0.55rem 0.5rem 0.55rem 0.75rem;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-left: 4px solid transparent;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.team-row:hover {
+    background: var(--sheet);
+}
+
+.team-row[aria-current="true"] {
+    background: var(--sheet);
+    border-left-color: var(--clock);
+}
+
+.team-row .badge {
+    grid-row: span 2;
+}
+
+.team-row-name {
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.team-row-city {
+    color: var(--ink-soft);
+    font-size: 0.875rem;
+}
+
+/* Logo yerine takım rozeti: adın baş harfleri, addan türetilen renk (ADR-0001) */
+.badge {
+    display: inline-grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 3px;
+    background: var(--badge, var(--ink));
+    color: #ffffff;
+    font: 800 1rem/1 var(--display);
+    letter-spacing: 0.02em;
+}
+
+.badge-large {
+    width: 4.5rem;
+    height: 4.5rem;
+    font-size: 2rem;
+    border-radius: 4px;
+}
+
+/* Kadro kâğıdı */
+.sheet {
+    align-self: start;
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    border-top: 6px solid var(--line-strong);
+    padding: clamp(1.25rem, 3vw, 2.5rem);
+    min-height: 18rem;
+}
+
+.sheet:focus {
+    outline: none;
+}
+
+.sheet-empty {
+    display: grid;
+    place-items: center;
+    min-height: 14rem;
+    color: var(--ink-soft);
+    text-align: center;
+}
+
+.sheet-head {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--line-strong);
+}
+
+h2 {
+    font-size: clamp(2.25rem, 5vw, 3.5rem);
+}
+
+.sheet-city {
+    margin: 0.35rem 0 0;
+    color: var(--ink-soft);
+}
+
+.roster {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+}
+
+.roster th {
+    padding: 0.75rem 0.5rem 0.4rem;
+    color: var(--ink-soft);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+}
+
+.roster td {
+    padding: 0.35rem 0.5rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+}
+
+.roster .col-number {
+    width: 5.5rem;
+}
+
+.roster .col-position {
+    width: 11rem;
+}
+
+.jersey {
+    display: block;
+    font: 800 2.75rem/1 var(--display);
+    font-variant-numeric: tabular-nums;
+}
+
+.player-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.position-code {
+    font-weight: 600;
+}
+
+.position-name {
+    display: block;
+    color: var(--ink-soft);
+    font-size: 0.875rem;
+}
+
+.notice {
+    margin: 1.25rem 0 0;
+    color: var(--ink-soft);
+}
+
+.notice button {
+    margin-left: 0.5rem;
+    padding: 0.35rem 0.8rem;
+    font: inherit;
+    font-weight: 600;
+    color: var(--sheet);
+    background: var(--ink);
+    border: 0;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.footnote {
+    padding: 1.25rem var(--gutter);
+    border-top: 1px solid var(--line);
+    color: var(--ink-soft);
+    font-size: 0.875rem;
+}
+
+.footnote p {
+    max-width: 75ch;
+    margin: 0;
+}
+
+@media (max-width: 760px) {
+    .layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .roster .col-position {
+        width: auto;
+    }
+
+    .jersey {
+        font-size: 2.25rem;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .team-row {
+        transition: background-color 120ms ease-out;
+    }
+}

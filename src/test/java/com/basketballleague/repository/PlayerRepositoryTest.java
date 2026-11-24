@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -18,6 +19,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -43,13 +47,15 @@ class PlayerRepositoryTest {
     }
 
     @Test
-    @DisplayName("Persists new player when ID is null")
+    @DisplayName("Persists and flushes new player when ID is null")
     void savesNewPlayer() {
         Player player = new Player(team, "Tarik", "Biberovic", 20, Position.SF);
 
         Player saved = repository.save(player);
 
-        verify(em).persist(player);
+        InOrder order = inOrder(em);
+        order.verify(em).persist(player);
+        order.verify(em).flush();
         assertThat(saved).isSameAs(player);
     }
 
@@ -106,6 +112,45 @@ class PlayerRepositoryTest {
         List<Player> result = repository.findByTeamId(1L);
 
         assertThat(result).containsExactly(player);
+    }
+
+    @Test
+    @DisplayName("Finds one page of a team's players")
+    void findsPageByTeamId() {
+        Player player = new Player(team, "Shane", "Larkin", 3, Position.PG);
+        when(em.createQuery(anyString(), eq(Player.class))).thenReturn(playerQuery);
+        when(playerQuery.setParameter("teamId", 4L)).thenReturn(playerQuery);
+        when(playerQuery.setFirstResult(10)).thenReturn(playerQuery);
+        when(playerQuery.setMaxResults(5)).thenReturn(playerQuery);
+        when(playerQuery.getResultList()).thenReturn(List.of(player));
+
+        List<Player> result = repository.findPageByTeamId(4L, 10, 5);
+
+        assertThat(result).containsExactly(player);
+        verify(playerQuery).setFirstResult(10);
+        verify(playerQuery).setMaxResults(5);
+    }
+
+    @Test
+    @DisplayName("Counts a team's players")
+    void countsByTeamId() {
+        when(em.createQuery(anyString(), eq(Long.class))).thenReturn(countQuery);
+        when(countQuery.setParameter("teamId", 4L)).thenReturn(countQuery);
+        when(countQuery.getSingleResult()).thenReturn(12L);
+
+        assertThat(repository.countByTeamId(4L)).isEqualTo(12L);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0, false", "1, true"})
+    @DisplayName("Reports whether a jersey number is taken in a team")
+    void checksJerseyNumber(long matches, boolean expected) {
+        when(em.createQuery(anyString(), eq(Long.class))).thenReturn(countQuery);
+        when(countQuery.setParameter("teamId", 4L)).thenReturn(countQuery);
+        when(countQuery.setParameter("jerseyNumber", 3)).thenReturn(countQuery);
+        when(countQuery.getSingleResult()).thenReturn(matches);
+
+        assertThat(repository.existsByTeamIdAndJerseyNumber(4L, 3)).isEqualTo(expected);
     }
 
     @Test

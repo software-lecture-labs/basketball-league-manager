@@ -22,6 +22,15 @@ final class ProblemCatalog {
             case INVALID_TEAM -> "Takım adı ve şehri boş olamaz.";
             case INVALID_PLAYER ->
                     "Oyuncunun adı, soyadı, takımı ve pozisyonu zorunludur; forma numarası 0-99 arasında olmalıdır.";
+            case TEAM_NOT_FOUND -> "İstenen takım bulunamadı.";
+            case TEAM_NAME_TAKEN -> "Bu adda bir takım zaten var.";
+            case JERSEY_NUMBER_TAKEN -> "Bu forma numarası takımda başka bir oyuncu tarafından kullanılıyor.";
+            case INVALID_GAME_STATUS_TRANSITION -> "Maç mevcut durumundan istenen duruma geçirilemez.";
+            case INVALID_SEASON -> "Sezon adı boş olamaz ve başlangıç tarihi zorunludur.";
+            case SEASON_ALREADY_STARTED -> "Sezon başladı; takım listesi ve fikstür artık değiştirilemez.";
+            case TEAM_ALREADY_IN_SEASON -> "Bu takım sezona zaten eklenmiş.";
+            case SEASON_FULL -> "Sezondaki takım sayısı üst sınıra ulaştı.";
+            case INVALID_GAME -> "Maç için sezon, tur ve birbirinden farklı iki takım gerekir.";
         };
     }
 

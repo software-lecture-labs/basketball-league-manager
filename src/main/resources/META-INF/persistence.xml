@@ -9,6 +9,8 @@
         <jta-data-source>java:app/jdbc/basketballLeague</jta-data-source>
         <class>com.basketballleague.entity.Team</class>
         <class>com.basketballleague.entity.Player</class>
+        <class>com.basketballleague.entity.Season</class>
+        <class>com.basketballleague.entity.Game</class>
         <exclude-unlisted-classes>false</exclude-unlisted-classes>
         <properties>
             <property name="jakarta.persistence.schema-generation.database.action" value="none"/>

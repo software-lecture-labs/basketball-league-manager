@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Takımlar ve kadrolar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Instrument+Sans:wght@400;500;600&display=swap">
+    <link rel="stylesheet" href="css/teams.css">
+    <script src="js/teams.js" defer></script>
+</head>
+<body>
+<header class="masthead">
+    <a class="masthead-title" href="teams.html">Basketbol Ligi</a>
+    <nav aria-label="Bölümler">
+        <a href="teams.html" aria-current="page">Takımlar</a>
+        <a href="fixtures.html">Fikstür</a>
+    </nav>
+</header>
+
+<main class="layout">
+    <section class="index" aria-labelledby="index-heading">
+        <div class="index-head">
+            <h1 id="index-heading">Takımlar</h1>
+            <p class="index-count" id="team-count" aria-live="polite"></p>
+        </div>
+        <label class="search">
+            <span class="visually-hidden">Takım veya şehir ara</span>
+            <input type="search" id="team-search" placeholder="Takım veya şehir ara" autocomplete="off">
+        </label>
+        <ol class="team-list" id="team-list" aria-label="Takım listesi"></ol>
+        <p class="notice" id="team-notice" hidden></p>
+    </section>
+
+    <section class="sheet" id="sheet" aria-live="polite" tabindex="-1">
+        <div class="sheet-empty" id="sheet-empty">
+            <p>Kadrosunu görmek için listeden bir takım seçin.</p>
+        </div>
+
+        <article id="sheet-team" hidden>
+            <header class="sheet-head">
+                <span class="badge badge-large" id="sheet-badge" aria-hidden="true"></span>
+                <div>
+                    <h2 id="sheet-name">Takım</h2>
+                    <p class="sheet-city" id="sheet-city"></p>
+                </div>
+            </header>
+
+            <table class="roster" id="roster" hidden>
+                <caption class="visually-hidden">Kadro, forma numarasına göre</caption>
+                <thead>
+                <tr>
+                    <th scope="col" class="col-number">No</th>
+                    <th scope="col">Oyuncu</th>
+                    <th scope="col" class="col-position">Pozisyon</th>
+                </tr>
+                </thead>
+                <tbody id="roster-body"></tbody>
+            </table>
+            <p class="notice" id="roster-notice" hidden></p>
+        </article>
+    </section>
+</main>
+
+<footer class="footnote">
+    <p>
+        Takım adları EuroLeague 2025-26 sezonundan alınmıştır. Kadrolar, skorlar ve puan durumu bu uygulamada
+        üretilen demo verisidir; resmî EuroLeague sonuçları değildir.
+    </p>
+</footer>
+
+<template id="team-row">
+    <li>
+        <button type="button" class="team-row">
+            <span class="badge" aria-hidden="true"></span>
+            <span class="team-row-name"></span>
+            <span class="team-row-city"></span>
+        </button>
+    </li>
+</template>
+</body>
+</html>

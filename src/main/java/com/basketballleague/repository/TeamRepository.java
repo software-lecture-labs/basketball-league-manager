@@ -26,10 +26,15 @@ public class TeamRepository {
         this.em = Objects.requireNonNull(em, "EntityManager must not be null");
     }
 
+    /**
+     * Inserts a new team or merges an existing one. A new team is flushed at once, so its generated id is available
+     * to the caller before the transaction commits (the identity column is filled by the INSERT).
+     */
     public Team save(Team team) {
         Objects.requireNonNull(team, "Team must not be null");
         if (team.getId() == null) {
             em.persist(team);
+            em.flush();
             return team;
         }
         return em.merge(team);
@@ -51,6 +56,16 @@ public class TeamRepository {
 
     public List<Team> findAll() {
         return em.createQuery("SELECT t FROM Team t ORDER BY t.name ASC", Team.class)
+                .getResultList();
+    }
+
+    /**
+     * One page of teams ordered by name; the id breaks ties so pages never overlap.
+     */
+    public List<Team> findPage(int firstResult, int maxResults) {
+        return em.createQuery("SELECT t FROM Team t ORDER BY t.name ASC, t.id ASC", Team.class)
+                .setFirstResult(firstResult)
+                .setMaxResults(maxResults)
                 .getResultList();
     }
 

@@ -202,6 +202,7 @@ takım değişikliği de geri alınır.
 basketball-league-manager/
 ├── docs/
 │   ├── adr/                  # Mimari karar kayıtları
+│   ├── api.md                # REST API sözleşmesi
 │   └── testing/              # Mimari test planı
 ├── src/main/java/com/basketballleague/
 │   ├── config/               # RestApplication, DataSourceConfig
@@ -377,16 +378,26 @@ PR'lara boyut ve alan etiketleri.
 
 Kararlar [ADR-0006](docs/adr/0006-hata-yonetimi-ve-loglama.md)'dadır. Hatalar
 [RFC 9457 Problem Details](https://www.rfc-editor.org/rfc/rfc9457) biçiminde
-(`application/problem+json`) döner. İstemciye istisna mesajı, SQL hatası veya stack trace gönderilmez.
+(`application/problem+json`) döner. İstemciye istisna mesajı, SQL hatası veya stack trace gönderilmez; ayrıntı
+yalnızca sunucu logundadır.
 
-| Durum                                       | HTTP | Log seviyesi                        |
-| ------------------------------------------- | ---- | ----------------------------------- |
-| Doğrulama hatası, bozuk istek               | 400  | DEBUG                               |
-| Kayıt bulunamadı                            | 404  | DEBUG                               |
-| İş kuralı ihlali (`DomainException`)        | 409  | INFO                                |
-| Eşzamanlı güncelleme çakışması              | 409  | INFO                                |
-| Veri bütünlüğü ihlali (unique, foreign key) | 409  | WARN                                |
-| Beklenmeyen hata                            | 500  | ERROR (stack trace yalnızca burada) |
+| Durum                                    | HTTP     | `code`                                      | Log seviyesi                        |
+| ---------------------------------------- | -------- | ------------------------------------------- | ----------------------------------- |
+| Alan doğrulama hatası (Bean Validation)  | 400      | `VALIDATION_FAILED` + `errors` listesi      | DEBUG                               |
+| Gövde okunamıyor, bozuk JSON             | 400      | `MALFORMED_REQUEST`                         | DEBUG                               |
+| Kayıt bulunamadı                         | 404      | kayda özel, ör. `TEAM_NOT_FOUND`            | DEBUG                               |
+| Desteklenmeyen yöntem veya içerik türü   | 405, 415 | `HTTP_405`, `HTTP_415` …                    | DEBUG                               |
+| İş kuralı ihlali (`DomainException`)     | 409      | kurala özel, ör. `INVALID_FIXTURE_INPUT`    | INFO                                |
+| Beklenmeyen hata                         | 500      | `INTERNAL_ERROR`                            | ERROR (stack trace yalnızca burada) |
+
+- `code` kalıcıdır; istemci karar verirken `detail` metnine değil `code`'a bakar. İş kuralı kodlarının tam
+  listesi [`ErrorCode`](src/main/java/com/basketballleague/domain/ErrorCode.java)'dadır, Türkçe `detail`
+  metinleri `ProblemCatalog`'dadır.
+- **Henüz yok ([#13](https://github.com/software-lecture-labs/basketball-league-manager/issues/13)):**
+  eşzamanlı güncelleme çakışması (optimistic lock) ve veri bütünlüğü ihlali (unique, foreign key) için 409
+  yanıtları. Şimdilik bu durumlar 500 döner.
+- Loglama SLF4J API ve `slf4j-jdk14` bağlayıcısıyla yapılır; loglar Payara'nın `java.util.logging` altyapısına,
+  yani sunucu konsoluna ve log dosyasına yazılır. `System.out` ve `printStackTrace` kullanılmaz (ArchUnit kuralı).
 
 ```json
 {
@@ -402,11 +413,21 @@ Kararlar [ADR-0006](docs/adr/0006-hata-yonetimi-ve-loglama.md)'dadır. Hatalar
 
 ## Veri kaynağı
 
-Takım ve oyuncu verisi elle hazırlanıp Flyway seed migration'ına yazılacaktır. Otomatik veri çekme veya canlı
-veri API'si kullanılmaz.
+Takım verisi elle hazırlanıp Flyway seed migration'ına yazılır
+(`V2__seed_euroleague_2025_26_teams.sql`). Otomatik veri çekme veya canlı veri API'si kullanılmaz.
 
-| Bilgi                                | Değer                                                                  |
-| ------------------------------------ | ---------------------------------------------------------------------- |
+| Bilgi                      | Değer                                                                                          |
+| -------------------------- | ---------------------------------------------------------------------------------------------- |
+| Referans sezonu            | EuroLeague 2025-26 (30 Eylül 2025 - 24 Mayıs 2026), normal sezonun 20 kulübü                   |
+| Kaynak                     | [Wikipedia: 2025–26 EuroLeague](https://en.wikipedia.org/wiki/2025%E2%80%9326_EuroLeague), "Qualified teams" |
+| Alınma tarihi              | 20 Kasım 2026                                                                                  |
+| Veri sürümü                | `euroleague-2025-26-teams-v1`                                                                  |
+| Takım alanları             | Ad (kaynaktaki yazımıyla, sponsorsuz), şehir (Türkçe yerleşik yazımıyla)                       |
+| Kadrolar                   | Henüz yok; referans tarihi seçilince ayrı bir migration ile eklenecek                          |
+| Oyuncu alanları            | Ad, soyad, forma numarası, pozisyon                                                            |
+| Maç sonuçları, transferler | Uygulamada üretilen demo verisi; resmî EuroLeague sonucu değildir                              |
+
+------------------------------------ | ---------------------------------------------------------------------- |
 | Kapsam                               | Tek EuroLeague sezonu, o sezonda tek bir referans tarihindeki kadrolar |
 | Oyuncu alanları                      | Ad, soyad, forma numarası, pozisyon                                    |
 | Referans sezonu ve tarihi            | Henüz seçilmedi (seed PR'ında eklenecek)                               |
@@ -421,6 +442,7 @@ veri API'si kullanılmaz.
 | ------------------------------------------------------- | ------------------------------------------------------------------ | ------------ |
 | [ADR-0001](docs/adr/0001-katmanli-mimari.md)            | Katmanlı monolit, EuroLeague veri kapsamı, puan durumunu hesaplama | Kabul edildi |
 | [ADR-0002](docs/adr/0002-jakarta-ee-ve-payara-micro.md) | Jakarta EE 11 Web Profile ve Payara Micro                          | Kabul edildi |
+| [ADR-0003](docs/adr/0003-entity-domain-modeli.md)       | Entity'ler domain nesnesi, sezon ve maç durum makineleri           | Önerildi     |
 | [ADR-0006](docs/adr/0006-hata-yonetimi-ve-loglama.md)   | Hata yönetimi ve loglama politikası                                | Kabul edildi |
 | [ADR-0008](docs/adr/0008-fikstur-algoritmasi.md)        | Fikstür üretimi için circle method                                 | Kabul edildi |
 

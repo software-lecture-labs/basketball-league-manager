@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fikstür ve Maç Takvimi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="css/teams.css">
+    <link rel="stylesheet" href="css/fixtures.css">
+    <script src="js/fixtures.js" defer></script>
+</head>
+<body>
+<header class="masthead">
+    <a class="masthead-title" href="teams.html">Basketbol Ligi</a>
+    <nav aria-label="Bölümler">
+        <a href="teams.html">Takımlar</a>
+        <a href="fixtures.html" aria-current="page">Fikstür</a>
+    </nav>
+</header>
+
+<main class="fixtures-layout">
+    <section class="fixtures-main" aria-labelledby="fixtures-heading">
+        <div class="fixtures-header">
+            <div>
+                <h1 id="fixtures-heading">Lig Fikstürü</h1>
+                <p class="fixtures-subtitle" id="season-title">EuroLeague 2025-26 Sezonu</p>
+            </div>
+
+            <!-- Durum Filtresi: Tümü / Oynanmış / Oynanmamış -->
+            <div class="filter-group" role="group" aria-label="Maç durumu filtresi">
+                <button type="button" class="filter-btn active" data-filter="ALL">Tüm Maçlar</button>
+                <button type="button" class="filter-btn" data-filter="SCHEDULED">Oynanmamış</button>
+                <button type="button" class="filter-btn" data-filter="FINISHED">Oynanmış</button>
+            </div>
+        </div>
+
+        <!-- Hafta Navigasyonu / Seçici Barı -->
+        <div class="rounds-toolbar">
+            <button type="button" class="round-nav-btn" id="prev-round" aria-label="Önceki Hafta" title="Önceki Hafta">
+                &larr; Önceki
+            </button>
+
+            <div class="rounds-scroll-container" id="rounds-nav" role="tablist" aria-label="Hafta seçimi">
+                <!-- JS ile hafta düğmeleri buraya eklenecektir -->
+            </div>
+
+            <button type="button" class="round-nav-btn" id="next-round" aria-label="Sonraki Hafta" title="Sonraki Hafta">
+                Sonraki &rarr;
+            </button>
+
+            <button type="button" class="view-all-btn" id="toggle-all-rounds">
+                Tüm Haftalar
+            </button>
+        </div>
+
+        <!-- Bildirim ve Durum Mesajları -->
+        <p class="notice" id="fixtures-notice" hidden></p>
+
+        <!-- Fikstür Kart Alanı -->
+        <div id="fixtures-container" class="rounds-container" aria-live="polite">
+            <!-- JS ile seçili hafta veya tüm haftaların maç kartları basılır -->
+        </div>
+    </section>
+</main>
+
+<footer class="footnote">
+    <p>
+        Fikstür çift devreli lig usulüne (Circle Method - ADR-0008) göre haftalara bölünmüştür. Maç sonuçları ve
+        durumları bu uygulamada üretilen demo verisidir; resmî EuroLeague sonuçları değildir.
+    </p>
+</footer>
+</body>
+</html>

@@ -26,6 +26,10 @@ final class ProblemCatalog {
             case TEAM_NAME_TAKEN -> "Bu adda bir takım zaten var.";
             case JERSEY_NUMBER_TAKEN -> "Bu forma numarası takımda başka bir oyuncu tarafından kullanılıyor.";
             case INVALID_GAME_STATUS_TRANSITION -> "Maç mevcut durumundan istenen duruma geçirilemez.";
+            case INVALID_SEASON -> "Sezon adı boş olamaz ve başlangıç tarihi zorunludur.";
+            case SEASON_ALREADY_STARTED -> "Sezon başladı; takım listesi ve fikstür artık değiştirilemez.";
+            case TEAM_ALREADY_IN_SEASON -> "Bu takım sezona zaten eklenmiş.";
+            case SEASON_FULL -> "Sezondaki takım sayısı üst sınıra ulaştı.";
         };
     }
 

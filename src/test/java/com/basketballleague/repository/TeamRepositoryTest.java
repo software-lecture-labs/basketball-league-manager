@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.basketballleague.entity.Team;
@@ -132,6 +133,27 @@ class TeamRepositoryTest {
         assertThat(result).isEqualTo(teams);
         verify(teamQuery).setFirstResult(40);
         verify(teamQuery).setMaxResults(20);
+    }
+
+    @Test
+    @DisplayName("Finds the teams of several ids in one query")
+    void findsByIdsInOneQuery() {
+        List<Team> teams = List.of(new Team("Anadolu Efes", "İstanbul"), new Team("Žalgiris", "Kaunas"));
+        when(em.createQuery(anyString(), eq(Team.class))).thenReturn(teamQuery);
+        when(teamQuery.setParameter("ids", List.of(3L, 1L))).thenReturn(teamQuery);
+        when(teamQuery.getResultList()).thenReturn(teams);
+
+        List<Team> result = repository.findByIds(List.of(3L, 1L));
+
+        assertThat(result).isEqualTo(teams);
+        verify(em).createQuery(anyString(), eq(Team.class));
+    }
+
+    @Test
+    @DisplayName("Does not query the database for an empty id list")
+    void findsNoTeamsForNoIds() {
+        assertThat(repository.findByIds(List.of())).isEmpty();
+        verifyNoInteractions(em);
     }
 
     @Test

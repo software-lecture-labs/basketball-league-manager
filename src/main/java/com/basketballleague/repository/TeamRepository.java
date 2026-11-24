@@ -4,6 +4,7 @@ import com.basketballleague.entity.Team;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -66,6 +67,20 @@ public class TeamRepository {
         return em.createQuery("SELECT t FROM Team t ORDER BY t.name ASC, t.id ASC", Team.class)
                 .setFirstResult(firstResult)
                 .setMaxResults(maxResults)
+                .getResultList();
+    }
+
+    /**
+     * The teams with the given ids, ordered by name, in one query instead of one {@code find} per id.
+     * Unknown ids are skipped.
+     */
+    public List<Team> findByIds(Collection<Long> ids) {
+        Objects.requireNonNull(ids, "Team ids must not be null");
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return em.createQuery("SELECT t FROM Team t WHERE t.id IN :ids ORDER BY t.name ASC, t.id ASC", Team.class)
+                .setParameter("ids", ids)
                 .getResultList();
     }
 

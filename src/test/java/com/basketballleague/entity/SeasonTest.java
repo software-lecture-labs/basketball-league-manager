@@ -1,5 +1,6 @@
 package com.basketballleague.entity;
 
+import static com.basketballleague.support.EntityIds.withId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -130,5 +131,24 @@ class SeasonTest {
         final Season season = withTeams(2);
 
         assertThatThrownBy(() -> season.getTeamIds().add(3L)).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void seasonsAreEqualOnlyWhenTheyHaveTheSameDatabaseId() {
+        final Season stored = withId(draft(), 4L);
+
+        assertThat(stored).isEqualTo(withId(new Season("Başka ad", START), 4L))
+                .isNotEqualTo(withId(draft(), 5L))
+                .isNotEqualTo(draft())
+                .isNotEqualTo(null)
+                .isNotEqualTo("2026-27 Demo Sezonu")
+                .hasSameHashCodeAs(draft());
+        assertThat(draft()).isNotEqualTo(draft());
+    }
+
+    @Test
+    void toStringNamesTheSeasonForTheLog() {
+        assertThat(withId(draft(), 4L))
+                .hasToString("Season{id=4, name='2026-27 Demo Sezonu', status=DRAFT}");
     }
 }

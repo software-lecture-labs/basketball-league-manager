@@ -1,5 +1,6 @@
 package com.basketballleague.entity;
 
+import static com.basketballleague.support.EntityIds.withId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -74,5 +75,29 @@ class GameTest {
                 .isInstanceOf(InvalidGameStatusTransitionException.class)
                 .extracting("code").isEqualTo(ErrorCode.INVALID_GAME_STATUS_TRANSITION);
         assertThat(game.getStatus()).isEqualTo(GameStatus.LIVE);
+    }
+
+    @Test
+    void gamesAreEqualOnlyWhenTheyHaveTheSameDatabaseId() {
+        final Game stored = withId(new Game(SEASON_ID, 1, HOME, AWAY), 9L);
+
+        assertThat(stored).isEqualTo(withId(new Game(SEASON_ID, 2, AWAY, HOME), 9L))
+                .isNotEqualTo(withId(new Game(SEASON_ID, 1, HOME, AWAY), 10L))
+                .isNotEqualTo(new Game(SEASON_ID, 1, HOME, AWAY))
+                .isNotEqualTo(null)
+                .isNotEqualTo("game")
+                .hasSameHashCodeAs(new Game(SEASON_ID, 1, HOME, AWAY));
+        assertThat(stored.getId()).isEqualTo(9L);
+    }
+
+    @Test
+    void newGameStartsAtVersionZero() {
+        assertThat(new Game(SEASON_ID, 1, HOME, AWAY).getVersion()).isZero();
+    }
+
+    @Test
+    void toStringDescribesTheGameForTheLog() {
+        assertThat(withId(new Game(SEASON_ID, 3, HOME, AWAY), 9L))
+                .hasToString("Game{id=9, seasonId=1, round=3, home=10, away=20, status=SCHEDULED}");
     }
 }

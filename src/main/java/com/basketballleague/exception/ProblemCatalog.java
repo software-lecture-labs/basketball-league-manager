@@ -25,6 +25,7 @@ final class ProblemCatalog {
             case TEAM_NOT_FOUND -> "İstenen takım bulunamadı.";
             case TEAM_NAME_TAKEN -> "Bu adda bir takım zaten var.";
             case JERSEY_NUMBER_TAKEN -> "Bu forma numarası takımda başka bir oyuncu tarafından kullanılıyor.";
+            case SEASON_NOT_FOUND -> "İstenen sezon bulunamadı.";
         };
     }
 

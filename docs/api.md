@@ -128,6 +128,50 @@ Oyuncunun kendi adresi (`/players/{id}`) henüz olmadığı için `Location` ba�
 | 404 | `TEAM_NOT_FOUND` | takım yok |
 | 409 | `JERSEY_NUMBER_TAKEN` | forma numarası bu takımda kullanılıyor |
 
+## Puan Durumu
+
+Puan durumu ayrı bir tabloda saklanmaz; yalnızca `CONFIRMED` durumundaki maçlardan hesaplanır ([ADR-0001](adr/0001-katmanli-mimari.md)).
+Puan eşitliğinde sırasıyla **ikili averaj → genel averaj → atılan sayı → takım adı (A → Z)** uygulanır.
+
+### `GET /seasons/{id}/standings`
+
+Sezonun güncel puan durumunu liste olarak döner.
+
+```json
+200 OK
+[
+  {
+    "rank": 1,
+    "teamId": 2,
+    "teamName": "Real Madrid",
+    "played": 10,
+    "won": 8,
+    "lost": 2,
+    "pointsScored": 850,
+    "pointsConceded": 800,
+    "pointDifference": 50,
+    "points": 18
+  },
+  {
+    "rank": 2,
+    "teamId": 1,
+    "teamName": "Anadolu Efes",
+    "played": 10,
+    "won": 8,
+    "lost": 2,
+    "pointsScored": 840,
+    "pointsConceded": 800,
+    "pointDifference": 40,
+    "points": 18
+  }
+]
+```
+
+| Durum | `code` | Ne zaman |
+| --- | --- | --- |
+| 400 | `VALIDATION_FAILED` | id sıfır veya negatif |
+| 404 | `SEASON_NOT_FOUND` | istenen sezon yok |
+
 ## Bilinen sınırlar
 
 - Aynı ad veya forma numarası iki istekte aynı anda gönderilirse kontrolü ikisi de geçebilir; ikinci kayıt

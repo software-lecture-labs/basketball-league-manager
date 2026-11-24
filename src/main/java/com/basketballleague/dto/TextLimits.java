@@ -1,7 +1,8 @@
 package com.basketballleague.dto;
 
 /**
- * Text column lengths shared by request records; they mirror {@code varchar(100)} in the V1 migration.
+ * Text column lengths shared by request records; they mirror the {@code varchar(100)} name columns of the
+ * migrations.
  */
 final class TextLimits {
 

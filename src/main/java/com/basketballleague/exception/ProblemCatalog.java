@@ -31,6 +31,8 @@ final class ProblemCatalog {
             case TEAM_ALREADY_IN_SEASON -> "Bu takım sezona zaten eklenmiş.";
             case SEASON_FULL -> "Sezondaki takım sayısı üst sınıra ulaştı.";
             case INVALID_GAME -> "Maç için sezon, tur ve birbirinden farklı iki takım gerekir.";
+            case SEASON_NOT_FOUND -> "İstenen sezon bulunamadı.";
+            case SEASON_NAME_TAKEN -> "Bu adda bir sezon zaten var.";
         };
     }
 

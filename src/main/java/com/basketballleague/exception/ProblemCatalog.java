@@ -30,6 +30,7 @@ final class ProblemCatalog {
             case SEASON_ALREADY_STARTED -> "Sezon başladı; takım listesi ve fikstür artık değiştirilemez.";
             case TEAM_ALREADY_IN_SEASON -> "Bu takım sezona zaten eklenmiş.";
             case SEASON_FULL -> "Sezondaki takım sayısı üst sınıra ulaştı.";
+            case INVALID_GAME -> "Maç için sezon, tur ve birbirinden farklı iki takım gerekir.";
         };
     }
 

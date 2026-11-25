@@ -26,18 +26,18 @@
         <archunit.version>1.5.1</archunit.version>
         <slf4j.version>2.0.20</slf4j.version>
         <!-- Test-only implementations; versions match the ones bundled in Payara Micro 7.2026.9. -->
-        <jersey.version>4.0.2</jersey.version>
-        <hibernate-validator.version>9.0.1.Final</hibernate-validator.version>
+        <jersey.version>4.0.3</jersey.version>
+        <hibernate-validator.version>9.2.0.Final</hibernate-validator.version>
         <expressly.version>6.0.0</expressly.version>
-        <yasson.version>3.0.4</yasson.version>
+        <yasson.version>3.0.5</yasson.version>
 
         <!-- Plugins -->
-        <flyway.version>13.12.2</flyway.version>
+        <flyway.version>13.13.0</flyway.version>
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.11.0</maven-dependency-plugin.version>
-        <maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
+        <maven-surefire-plugin.version>3.6.1</maven-surefire-plugin.version>
         <maven-war-plugin.version>3.5.1</maven-war-plugin.version>
-        <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.16</jacoco-maven-plugin.version>
     </properties>
 
     <dependencyManagement>

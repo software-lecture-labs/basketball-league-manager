@@ -22,17 +22,31 @@ public record TeamStanding(
         if (teamName.isBlank()) {
             throw new IllegalArgumentException("Team name cannot be blank");
         }
-        if (played < 0) throw new IllegalArgumentException("Played matches cannot be negative: " + played);
-        if (won < 0) throw new IllegalArgumentException("Won matches cannot be negative: " + won);
-        if (lost < 0) throw new IllegalArgumentException("Lost matches cannot be negative: " + lost);
-        if (played != won + lost) {
-            throw new IllegalArgumentException("Played (" + played + ") must equal won (" + won + ") + lost (" + lost + ")");
+        if (played < 0) {
+            throw new IllegalArgumentException("Played matches cannot be negative: " + played);
         }
-        if (pointsScored < 0) throw new IllegalArgumentException("Points scored cannot be negative: " + pointsScored);
-        if (pointsConceded < 0) throw new IllegalArgumentException("Points conceded cannot be negative: " + pointsConceded);
+        if (won < 0) {
+            throw new IllegalArgumentException("Won matches cannot be negative: " + won);
+        }
+        if (lost < 0) {
+            throw new IllegalArgumentException("Lost matches cannot be negative: " + lost);
+        }
+        if (played != won + lost) {
+            throw new IllegalArgumentException(
+                    "Played (" + played + ") must equal won (" + won + ") + lost (" + lost + ")"
+            );
+        }
+        if (pointsScored < 0) {
+            throw new IllegalArgumentException("Points scored cannot be negative: " + pointsScored);
+        }
+        if (pointsConceded < 0) {
+            throw new IllegalArgumentException("Points conceded cannot be negative: " + pointsConceded);
+        }
         if (pointDifference != pointsScored - pointsConceded) {
-            throw new IllegalArgumentException("Point difference (" + pointDifference + ") must equal pointsScored ("
-                    + pointsScored + ") - pointsConceded (" + pointsConceded + ")");
+            throw new IllegalArgumentException(
+                    "Point difference (" + pointDifference + ") must equal pointsScored ("
+                    + pointsScored + ") - pointsConceded (" + pointsConceded + ")"
+            );
         }
     }
 

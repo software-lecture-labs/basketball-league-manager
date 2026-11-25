@@ -1,8 +1,12 @@
 package com.basketballleague.service;
 
+import static com.basketballleague.support.EntityIds.withId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.basketballleague.domain.SeasonNotFoundException;
@@ -13,150 +17,74 @@ import com.basketballleague.repository.GameRepository;
 import com.basketballleague.repository.SeasonRepository;
 import com.basketballleague.repository.TeamRepository;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Unit tests for {@link StandingService}.
- *
- * <h2>Pre-3.2 scope</h2>
- * Tests verify that:
- * <ul>
- *   <li>All season teams appear in the standings table with zero stats when no confirmed games exist.</li>
- *   <li>Teams are sorted alphabetically (Türkçe Collator via {@link StandingsComparator}) when all stats are equal.</li>
- *   <li>{@link SeasonNotFoundException} is thrown for an unknown season.</li>
- * </ul>
- *
- * <p>Score-dependent tests (non-zero wins, points, tie-breaking on point diff) will be added
- * when Osman's 3.2 (score entry) is merged and {@code hasScores()} returns {@code true}.
+ * Ranking rules with real scores are tested in {@code StandingsTableTest}; this class checks the loading and the
+ * response mapping. Until result entry (ADR-0004) no game can be confirmed, so the confirmed list is empty here.
  */
+@ExtendWith(MockitoExtension.class)
 class StandingServiceTest {
 
-    private SeasonRepository seasonRepository;
-    private GameRepository gameRepository;
-    private TeamRepository teamRepository;
-    private StandingService standingService;
+    private static final long SEASON_ID = 1L;
 
-    @BeforeEach
-    void setUp() {
-        seasonRepository = mock(SeasonRepository.class);
-        gameRepository = mock(GameRepository.class);
-        teamRepository = mock(TeamRepository.class);
-        standingService = new StandingService(seasonRepository, gameRepository, teamRepository);
+    @Mock
+    private SeasonRepository seasonRepository;
+
+    @Mock
+    private GameRepository gameRepository;
+
+    @Mock
+    private TeamRepository teamRepository;
+
+    private StandingService service() {
+        return new StandingService(seasonRepository, gameRepository, teamRepository);
+    }
+
+    private void givenSeasonWithTeams(Team... teams) {
+        final List<Long> ids = Arrays.stream(teams).map(Team::getId).toList();
+        when(seasonRepository.findById(SEASON_ID))
+                .thenReturn(Optional.of(new Season("2026-27", LocalDate.of(2026, 10, 1))));
+        when(seasonRepository.findTeamIds(SEASON_ID)).thenReturn(ids);
+        when(teamRepository.findByIds(ids)).thenReturn(List.of(teams));
+        when(gameRepository.findConfirmedBySeasonId(SEASON_ID)).thenReturn(List.of());
+    }
+
+    private static Team team(long id, String name) {
+        return withId(new Team(name, "Şehir"), id);
     }
 
     @Test
-    @DisplayName("Bilinmeyen sezon için SeasonNotFoundException fırlatır")
-    void throwsSeasonNotFoundForUnknownSeason() {
+    void unknownSeasonFailsWithNotFoundBeforeAnyOtherQuery() {
         when(seasonRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> standingService.calculateStandings(99L))
-                .isInstanceOf(SeasonNotFoundException.class);
+        assertThatThrownBy(() -> service().calculateStandings(99L)).isInstanceOf(SeasonNotFoundException.class);
+        verify(teamRepository, never()).findByIds(anyCollection());
+        verify(gameRepository, never()).findConfirmedBySeasonId(anyLong());
     }
 
     @Test
-    @DisplayName("Onaylı maç yoksa tüm takımlar sıfır istatistikle görünür")
-    void allTeamsAppearsWithZeroStatsWhenNoConfirmedGames() {
-        final Season season = new Season("EuroLeague 2025-26", LocalDate.of(2025, 10, 1));
-        season.addTeam(1L);
-        season.addTeam(2L);
-        season.addTeam(3L);
+    void teamsWithoutConfirmedGamesAreListedWithZerosAndRankedByName() {
+        givenSeasonWithTeams(team(3L, "Real Madrid"), team(2L, "Panathinaikos"), team(1L, "Anadolu Efes"));
 
-        when(seasonRepository.findById(1L)).thenReturn(Optional.of(season));
-        when(gameRepository.findConfirmedBySeasonId(1L)).thenReturn(List.of());
-        when(teamRepository.findByIds(List.of(1L, 2L, 3L))).thenReturn(List.of(
-                makeTeam(1L, "Anadolu Efes"),
-                makeTeam(2L, "Fenerbahçe Beko"),
-                makeTeam(3L, "Real Madrid")
-        ));
+        final List<StandingResponse> standings = service().calculateStandings(SEASON_ID);
 
-        final List<StandingResponse> standings = standingService.calculateStandings(1L);
-
-        assertThat(standings).hasSize(3);
-        standings.forEach(s -> {
-            assertThat(s.played()).isZero();
-            assertThat(s.won()).isZero();
-            assertThat(s.lost()).isZero();
-            assertThat(s.pointsFor()).isZero();
-            assertThat(s.pointsAgainst()).isZero();
-            assertThat(s.leaguePoints()).isZero();
-        });
+        assertThat(standings).containsExactly(
+                new StandingResponse(1, 1L, "Anadolu Efes", 0, 0, 0, 0, 0, 0, 0),
+                new StandingResponse(2, 2L, "Panathinaikos", 0, 0, 0, 0, 0, 0, 0),
+                new StandingResponse(3, 3L, "Real Madrid", 0, 0, 0, 0, 0, 0, 0));
     }
 
     @Test
-    @DisplayName("Onaylı maç yokken takımlar alfabetik sırayla listelenir")
-    void teamsAreRankedAlphabeticallyWhenNoGamesPlayed() {
-        final Season season = new Season("Test", LocalDate.of(2025, 10, 1));
-        season.addTeam(1L);
-        season.addTeam(2L);
-        season.addTeam(3L);
+    void seasonWithoutTeamsHasAnEmptyTable() {
+        givenSeasonWithTeams();
 
-        when(seasonRepository.findById(1L)).thenReturn(Optional.of(season));
-        when(gameRepository.findConfirmedBySeasonId(1L)).thenReturn(List.of());
-        // Provide in reverse order to ensure sorting is by service, not by input order
-        when(teamRepository.findByIds(List.of(1L, 2L, 3L))).thenReturn(List.of(
-                makeTeam(3L, "Real Madrid"),
-                makeTeam(2L, "Panathinaikos"),
-                makeTeam(1L, "Anadolu Efes")
-        ));
-
-        final List<StandingResponse> standings = standingService.calculateStandings(1L);
-
-        assertThat(standings).extracting(StandingResponse::teamName)
-                .containsExactly("Anadolu Efes", "Panathinaikos", "Real Madrid");
-    }
-
-    @Test
-    @DisplayName("rank alanı 1'den başlar ve ardışık olur")
-    void rankIsOneBasedAndConsecutive() {
-        final Season season = new Season("Test", LocalDate.of(2025, 10, 1));
-        season.addTeam(1L);
-        season.addTeam(2L);
-
-        when(seasonRepository.findById(1L)).thenReturn(Optional.of(season));
-        when(gameRepository.findConfirmedBySeasonId(1L)).thenReturn(List.of());
-        when(teamRepository.findByIds(List.of(1L, 2L))).thenReturn(List.of(
-                makeTeam(1L, "Anadolu Efes"),
-                makeTeam(2L, "Barcelona")
-        ));
-
-        final List<StandingResponse> standings = standingService.calculateStandings(1L);
-
-        assertThat(standings.get(0).rank()).isEqualTo(1);
-        assertThat(standings.get(1).rank()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Sezona takım eklenmemişse boş liste döner")
-    void returnsEmptyListWhenSeasonHasNoTeams() {
-        final Season season = new Season("Empty", LocalDate.of(2025, 10, 1));
-
-        when(seasonRepository.findById(1L)).thenReturn(Optional.of(season));
-        when(gameRepository.findConfirmedBySeasonId(1L)).thenReturn(List.of());
-        when(teamRepository.findByIds(List.of())).thenReturn(List.of());
-
-        final List<StandingResponse> standings = standingService.calculateStandings(1L);
-
-        assertThat(standings).isEmpty();
-    }
-
-    // -------------------------------------------------------------------------
-    // Helper
-    // -------------------------------------------------------------------------
-
-    private static Team makeTeam(long id, String name) {
-        final Team t = new Team(name, "City");
-        // Inject id via reflection since Team.id is auto-generated
-        try {
-            final var field = t.getClass().getDeclaredField("id");
-            field.setAccessible(true);
-            field.set(t, id);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-        return t;
+        assertThat(service().calculateStandings(SEASON_ID)).isEmpty();
     }
 }

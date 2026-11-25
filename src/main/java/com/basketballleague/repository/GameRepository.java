@@ -48,19 +48,13 @@ public class GameRepository {
     }
 
     /**
-     * Returns all CONFIRMED games for the given season in a single query.
-     * Only confirmed games contribute to the standings (ADR-0003).
-     * <p>
-     * When Osman's 3.2 (score entry) is merged, games will transition FINISHED → CONFIRMED
-     * via the result-entry endpoint; this query will then return them automatically.
+     * The season's confirmed games in one query. Only confirmed games count in the standings (ADR-0001).
+     * The status is a JPQL enum literal rather than a parameter: the repository may depend on entities only
+     * (ADR-0001), and the literal keeps it free of the {@code domain} package.
      */
     public List<Game> findConfirmedBySeasonId(long seasonId) {
-        return em.createQuery(
-                        "SELECT g FROM Game g"
-                        + " WHERE g.seasonId = :seasonId"
-                        + " AND g.status = com.basketballleague.domain.GameStatus.CONFIRMED"
-                        + " ORDER BY g.id ASC",
-                        Game.class)
+        return em.createQuery("SELECT g FROM Game g WHERE g.seasonId = :seasonId"
+                        + " AND g.status = com.basketballleague.domain.GameStatus.CONFIRMED", Game.class)
                 .setParameter("seasonId", seasonId)
                 .getResultList();
     }

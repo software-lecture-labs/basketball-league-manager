@@ -46,4 +46,22 @@ public class GameRepository {
                 .setParameter("seasonId", seasonId)
                 .getResultList();
     }
+
+    /**
+     * Returns all CONFIRMED games for the given season in a single query.
+     * Only confirmed games contribute to the standings (ADR-0003).
+     * <p>
+     * When Osman's 3.2 (score entry) is merged, games will transition FINISHED → CONFIRMED
+     * via the result-entry endpoint; this query will then return them automatically.
+     */
+    public List<Game> findConfirmedBySeasonId(long seasonId) {
+        return em.createQuery(
+                        "SELECT g FROM Game g"
+                        + " WHERE g.seasonId = :seasonId"
+                        + " AND g.status = com.basketballleague.domain.GameStatus.CONFIRMED"
+                        + " ORDER BY g.id ASC",
+                        Game.class)
+                .setParameter("seasonId", seasonId)
+                .getResultList();
+    }
 }

@@ -204,6 +204,7 @@ basketball-league-manager/
 │   ├── adr/                  # Mimari karar kayıtları
 │   ├── api.md                # REST API sözleşmesi
 │   └── testing/              # Mimari test planı
+├── scripts/                  # Demo sezonu betikleri (demo-sezon.sh, demo-sezon.ps1)
 ├── src/main/java/com/basketballleague/
 │   ├── config/               # RestApplication, DataSourceConfig
 │   ├── domain/               # FixtureGenerator, DomainException, record'lar
@@ -344,6 +345,25 @@ curl http://localhost:8080/basketball-league/api/ping
 > [!TIP]
 > Ortam değişkenlerinden biri eksikse veya veritabanına bağlanılamıyorsa uygulama yüklenmez ve
 > `/api/ping` **404** döner. Payara'nın konsol çıktısındaki dağıtım hatasına bakın.
+
+### 7. Demo sezonu (isteğe bağlı)
+
+Migration'lar yalnızca şemayı ve takımları yükler; sezon ve fikstür uygulamadan üretilir. Uygulama çalışırken
+ikinci bir terminalde şu betik, ada göre ilk altı takımla bir demo sezonu oluşturur ve fikstürünü üretir:
+
+```bash
+scripts/demo-sezon.sh          # macOS / Linux (curl ve jq gerekir)
+.\scripts\demo-sezon.ps1       # Windows PowerShell
+```
+
+Takım sayısı değiştirilebilir (`scripts/demo-sezon.sh 8`, `.\scripts\demo-sezon.ps1 -TeamCount 8`; 2-20 arası).
+Betik tekrar çalıştırılabilir: var olan sezonu kullanır, üretilmiş fikstürü yeniden üretmez. Sonrasında fikstür
+`http://localhost:8080/basketball-league/fixtures.html` adresinde görünür. Sayfayı VS Code "Go Live" ile değil,
+Payara üzerinden açın; API yalnızca Payara'da çalışır.
+
+> [!NOTE]
+> Windows "running scripts is disabled" derse betiği bu oturum için izin vererek çalıştırın:
+> `powershell -ExecutionPolicy Bypass -File .\scripts\demo-sezon.ps1`
 
 ---
 

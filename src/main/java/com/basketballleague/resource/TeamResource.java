@@ -1,5 +1,9 @@
 package com.basketballleague.resource;
 
+import static com.basketballleague.resource.PageLimits.DEFAULT_PAGE_SIZE;
+import static com.basketballleague.resource.PageLimits.MAX_PAGE;
+import static com.basketballleague.resource.PageLimits.MAX_PAGE_SIZE;
+
 import com.basketballleague.dto.CreatePlayerRequest;
 import com.basketballleague.dto.CreateTeamRequest;
 import com.basketballleague.dto.PageResponse;
@@ -35,11 +39,6 @@ import java.net.URI;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class TeamResource {
-
-    static final String DEFAULT_PAGE_SIZE = "20";
-    static final int MAX_PAGE_SIZE = 100;
-    /** Keeps {@code page * size} inside an int, the type JPA uses for the first result. */
-    static final int MAX_PAGE = Integer.MAX_VALUE / MAX_PAGE_SIZE;
 
     private static final String TEAM_ID = "teamId";
 

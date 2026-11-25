@@ -1,0 +1,41 @@
+# Bağımlılık güncellemeleri. Dependabot bu dosyayı yalnızca varsayılan daldan
+# (main) okur; dev -> main sürümünden sonra devreye girer.
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Europe/Istanbul
+    open-pull-requests-limit: 2
+    labels: [dependencies, build]
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      maven-minor-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Major sürüm geçişleri (ör. Jakarta EE 12) ekip kararı ve ADR gerektirir.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Europe/Istanbul
+    open-pull-requests-limit: 2
+    labels: [dependencies, ci]
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      github-actions:
+        patterns: ['*']

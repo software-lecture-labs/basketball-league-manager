@@ -1,0 +1,50 @@
+# actions/labeler kuralları: etiket adı -> değiştiğinde etiketi tetikleyen yollar.
+# Etiketlerin repoda önceden tanımlı olması gerekir.
+
+adr:
+  - changed-files:
+      - any-glob-to-any-file: 'docs/adr/**'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: ['docs/**', '**/*.md']
+
+domain:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/main/java/com/basketballleague/domain/**'
+          - 'src/main/java/com/basketballleague/entity/**'
+
+service:
+  - changed-files:
+      - any-glob-to-any-file: 'src/main/java/com/basketballleague/service/**'
+
+api:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/main/java/com/basketballleague/resource/**'
+          - 'src/main/java/com/basketballleague/dto/**'
+          - 'src/main/java/com/basketballleague/exception/**'
+
+db:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/main/java/com/basketballleague/repository/**'
+          - 'src/main/resources/db/**'
+          - 'src/main/resources/META-INF/persistence.xml'
+
+ui:
+  - changed-files:
+      - any-glob-to-any-file: 'src/main/webapp/**'
+
+test:
+  - changed-files:
+      - any-glob-to-any-file: 'src/test/**'
+
+build:
+  - changed-files:
+      - any-glob-to-any-file: ['pom.xml', 'mvnw', 'mvnw.cmd', '.mvn/**']
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file: '.github/**'

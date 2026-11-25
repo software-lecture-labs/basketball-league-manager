@@ -1,0 +1,21 @@
+name: Labeler
+
+# Değişen dosyaların yoluna göre PR'a katman/konu etiketi koyar.
+# Kurallar .github/labeler.yml dosyasında.
+on:
+  pull_request:
+    branches: [main, dev]
+
+permissions: {}
+
+jobs:
+  path-label:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/labeler@v7
+        with:
+          sync-labels: true

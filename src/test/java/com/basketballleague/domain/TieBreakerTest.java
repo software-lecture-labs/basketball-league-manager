@@ -285,12 +285,13 @@ class TieBreakerTest {
         final StandingsComparator comparator = StandingsComparator.ofStandard(matches, pointsPolicy);
 
         // Real & Efes have equal points (18), but Real has H2H advantage -> Real should be #1, Efes #2
-        final TeamStanding efes = TeamStanding.of(efesId, "Anadolu Efes", 8, 2, 850, 800, pointsPolicy); // 18 pts
-        final TeamStanding real = TeamStanding.of(realId, "Real Madrid", 8, 2, 840, 800, pointsPolicy);  // 18 pts
+        final TeamStanding efes = TeamStanding.of(efesId, "Anadolu Efes", 8, 2, 850, 800, pointsPolicy);
+        final TeamStanding real = TeamStanding.of(realId, "Real Madrid", 8, 2, 840, 800, pointsPolicy);
 
-        // Pao & Fener have equal points (16), no H2H, but Pao has better overall point difference (+30 vs +10) -> Pao #3, Fener #4
-        final TeamStanding pao = TeamStanding.of(paoId, "Panathinaikos", 6, 4, 820, 790, pointsPolicy);       // 16 pts, diff +30
-        final TeamStanding fener = TeamStanding.of(fenerId, "Fenerbahçe Beko", 6, 4, 800, 790, pointsPolicy); // 16 pts, diff +10
+        // Pao & Fener have equal points (16) and no H2H; Pao has the better overall point difference
+        // (+30 vs +10) -> Pao #3, Fener #4
+        final TeamStanding pao = TeamStanding.of(paoId, "Panathinaikos", 6, 4, 820, 790, pointsPolicy);
+        final TeamStanding fener = TeamStanding.of(fenerId, "Fenerbahçe Beko", 6, 4, 800, 790, pointsPolicy);
 
         // Milano has 0 matches played -> #5
         final TeamStanding milano = TeamStanding.zero(milanoId, "EA7 Olimpia Milano"); // 0 pts

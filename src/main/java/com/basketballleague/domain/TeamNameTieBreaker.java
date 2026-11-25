@@ -14,7 +14,7 @@ public final class TeamNameTieBreaker implements TieBreaker {
     private static final Collator TR_COLLATOR;
 
     static {
-        TR_COLLATOR = Collator.getInstance(new Locale("tr", "TR"));
+        TR_COLLATOR = Collator.getInstance(Locale.of("tr", "TR"));
         TR_COLLATOR.setStrength(Collator.PRIMARY);
     }
 

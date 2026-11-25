@@ -11,6 +11,8 @@
         <class>com.basketballleague.entity.Player</class>
         <class>com.basketballleague.entity.Season</class>
         <class>com.basketballleague.entity.Game</class>
+        <class>com.basketballleague.entity.QuarterScore</class>
+        <class>com.basketballleague.entity.PlayerPoints</class>
         <exclude-unlisted-classes>false</exclude-unlisted-classes>
         <properties>
             <property name="jakarta.persistence.schema-generation.database.action" value="none"/>

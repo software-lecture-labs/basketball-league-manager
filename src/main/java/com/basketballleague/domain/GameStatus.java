@@ -3,8 +3,8 @@ package com.basketballleague.domain;
 import java.util.Set;
 
 /**
- * Life cycle of a game: {@code SCHEDULED → LIVE → FINISHED → CONFIRMED}. A confirmed game is final; its score
- * no longer changes (ADR-0003).
+ * Life cycle of a game: {@code SCHEDULED → LIVE → FINISHED → CONFIRMED}, with {@code FINISHED → LIVE} allowed
+ * via reopen before confirmation. A confirmed game is terminal; its score no longer changes (ADR-0003, ADR-0004).
  */
 public enum GameStatus {
     SCHEDULED,
@@ -17,7 +17,7 @@ public enum GameStatus {
         return switch (this) {
             case SCHEDULED -> Set.of(LIVE);
             case LIVE -> Set.of(FINISHED);
-            case FINISHED -> Set.of(CONFIRMED);
+            case FINISHED -> Set.of(LIVE, CONFIRMED);
             case CONFIRMED -> Set.of();
         };
     }

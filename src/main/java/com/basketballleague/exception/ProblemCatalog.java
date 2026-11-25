@@ -33,6 +33,15 @@ final class ProblemCatalog {
             case INVALID_GAME -> "Maç için sezon, tur ve birbirinden farklı iki takım gerekir.";
             case SEASON_NOT_FOUND -> "İstenen sezon bulunamadı.";
             case SEASON_NAME_TAKEN -> "Bu adda bir sezon zaten var.";
+            case INVALID_QUARTER_SCORE ->
+                    "Çeyrek skorları 1'den başlayarak boşluksuz artmalı, sayılar negatif olmamalı ve eşitlik "
+                            + "yoksa uzatma girilmemelidir.";
+            case OVERTIME_REQUIRED ->
+                    "Berabere biten maç tamamlanamaz; eşitlik bozulana kadar uzatma çeyreği girilmelidir.";
+            case PLAYER_NOT_IN_GAME -> "Oyuncu bu maçta oynayan takımlardan birinin kadrosunda değil.";
+            case SCORE_MISMATCH -> "Oyuncu sayılarının takım bazındaki toplamı maç skoruyla uyuşmuyor.";
+            case CONCURRENT_UPDATE ->
+                    "Maç sizden önce başka bir işlem tarafından güncellendi; sayfayı yenileyip tekrar deneyin.";
         };
     }
 

@@ -15,11 +15,11 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 class GameStatusTest {
 
-    /** The transition table of ADR-0003, written out independently of the enum. */
+    /** The transition table of ADR-0003 and ADR-0004 (reopen), written out independently of the enum. */
     private static final Map<GameStatus, Set<GameStatus>> TABLE = Map.of(
             SCHEDULED, Set.of(LIVE),
             LIVE, Set.of(FINISHED),
-            FINISHED, Set.of(CONFIRMED),
+            FINISHED, Set.of(LIVE, CONFIRMED),
             CONFIRMED, Set.of());
 
     @ParameterizedTest

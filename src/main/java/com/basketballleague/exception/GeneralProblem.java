@@ -10,6 +10,10 @@ import java.util.List;
 enum GeneralProblem {
     VALIDATION_FAILED(Response.Status.BAD_REQUEST, "İstekte geçersiz alanlar var."),
     MALFORMED_REQUEST(Response.Status.BAD_REQUEST, "İstek okunamadı; gönderilen verinin biçimini kontrol edin."),
+    CONCURRENT_UPDATE(Response.Status.CONFLICT,
+            "Kayıt siz işlem yaparken başka bir istekle değiştirildi. Güncel hâlini yükleyip yeniden deneyin."),
+    DATA_CONFLICT(Response.Status.CONFLICT,
+            "İstek mevcut verilerle çakışıyor: aynı kayıt zaten var ya da başka kayıtlar bu kayda bağlı."),
     INTERNAL_ERROR(Response.Status.INTERNAL_SERVER_ERROR, "Beklenmeyen bir hata oluştu. Lütfen daha sonra deneyin.");
 
     private final Response.Status status;

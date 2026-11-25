@@ -1,6 +1,6 @@
 ---
 title: ADR-0002-Jakarta EE 11 Web Profile ve Payara Micro Seçimi
-status: Önerildi
+status: Kabul Edildi
 date: 2026-11-18
 author: Mustafa Budak
 deciders: Ömer Ünlü, Osman Balcı, Mustafa Budak

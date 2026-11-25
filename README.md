@@ -414,7 +414,7 @@ yalnızca sunucu logundadır.
 ## Veri kaynağı
 
 Takım ve kadro verisi, kaynak sayfaların sabit sürümlerinden bir kez hazırlanıp Flyway seed migration'larına
-yazıldı (`V2__seed_euroleague_2025_26_teams.sql`, `V4__seed_euroleague_2025_26_rosters.sql`). Uygulama veri
+yazıldı (`V2__seed_euroleague_2025_26_teams.sql`, `V5__seed_euroleague_2025_26_rosters.sql`). Uygulama veri
 çekmez; canlı veri API'si kullanılmaz.
 
 | Bilgi                      | Değer                                                                                          |
@@ -422,7 +422,7 @@ yazıldı (`V2__seed_euroleague_2025_26_teams.sql`, `V4__seed_euroleague_2025_26
 | Referans sezonu            | EuroLeague 2025-26 (30 Eylül 2025 - 24 Mayıs 2026), normal sezonun 20 kulübü                   |
 | Takım kaynağı              | [Wikipedia: 2025–26 EuroLeague](https://en.wikipedia.org/wiki/2025%E2%80%9326_EuroLeague), "Qualified teams" |
 | Kadro referans tarihi      | 1 Ocak 2026                                                                                    |
-| Kadro kaynağı              | Her kulübün Wikipedia makalesindeki "Current roster" tablosunun bu tarihten önceki son sürümü (beş kulüpte tabloyu taşıyan sezon makalesi); sabit sürüm bağlantıları V4'ün başında |
+| Kadro kaynağı              | Her kulübün Wikipedia makalesindeki "Current roster" tablosunun bu tarihten önceki son sürümü (beş kulüpte tabloyu taşıyan sezon makalesi); sabit sürüm bağlantıları V5'in başında |
 | Alınma tarihi              | Takımlar 20 Kasım 2026, kadrolar 25 Kasım 2026                                                 |
 | Veri sürümü                | `euroleague-2025-26-teams-v1`, `euroleague-2025-26-rosters-v1`                                 |
 | Takım alanları             | Ad (kaynaktaki yazımıyla, sponsorsuz), şehir (Türkçe yerleşik yazımıyla)                       |

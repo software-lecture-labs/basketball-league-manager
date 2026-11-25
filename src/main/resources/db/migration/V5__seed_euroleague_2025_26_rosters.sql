@@ -1,5 +1,5 @@
 -- =============================================================================
--- V4: EuroLeague 2025-26 kulüplerinin 1 Ocak 2026 tarihindeki kadrolarını ekle.
+-- V5: EuroLeague 2025-26 kulüplerinin 1 Ocak 2026 tarihindeki kadrolarını ekle.
 --
 -- Veri sürümü : euroleague-2025-26-rosters-v1
 -- Referans    : 1 Ocak 2026. Her takım için kaynak, bu tarihten önceki son Wikipedia sürümüdür
@@ -537,6 +537,6 @@ WHERE t.name = 'Žalgiris';
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM teams t WHERE NOT EXISTS (SELECT 1 FROM players p WHERE p.team_id = t.id)) THEN
-        RAISE EXCEPTION 'V4: kadrosu eklenmemiş takım var';
+        RAISE EXCEPTION 'V5: kadrosu eklenmemiş takım var';
     END IF;
 END $$;

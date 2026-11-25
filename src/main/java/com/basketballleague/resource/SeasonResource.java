@@ -9,9 +9,7 @@ import com.basketballleague.dto.CreateSeasonRequest;
 import com.basketballleague.dto.PageResponse;
 import com.basketballleague.dto.SeasonResponse;
 import com.basketballleague.dto.TeamResponse;
-import com.basketballleague.dto.StandingResponse;
 import com.basketballleague.service.SeasonService;
-import com.basketballleague.service.StandingService;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -46,18 +44,15 @@ public class SeasonResource {
     private static final String SEASON_ID = "seasonId";
 
     private final SeasonService seasonService;
-    private final StandingService standingService;
 
     /** Required by CDI to create the client proxy; never used to serve calls. */
     protected SeasonResource() {
         this.seasonService = null;
-        this.standingService = null;
     }
 
     @Inject
-    public SeasonResource(SeasonService seasonService, StandingService standingService) {
+    public SeasonResource(SeasonService seasonService) {
         this.seasonService = seasonService;
-        this.standingService = standingService;
     }
 
     @GET
@@ -98,19 +93,5 @@ public class SeasonResource {
             @NotNull @Valid AddSeasonTeamRequest request) {
         final TeamResponse added = seasonService.addTeam(seasonId, request);
         return Response.status(Response.Status.CREATED).entity(added).build();
-    }
-
-    /**
-     * Returns the current standings for the given season, computed from CONFIRMED games.
-     *
-     * <p>Not paged: a season has at most 20 teams (see docs/api.md).
-     * <p>Scores (and therefore non-zero stats) will appear once Osman's 3.2 (score entry) is merged.
-     *
-     * @see StandingService#calculateStandings(long)
-     */
-    @GET
-    @Path("{seasonId}/standings")
-    public List<StandingResponse> getStandings(@PathParam(SEASON_ID) @Positive long seasonId) {
-        return standingService.calculateStandings(seasonId);
     }
 }

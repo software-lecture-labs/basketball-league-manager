@@ -94,7 +94,7 @@ class ConstraintViolationExceptionMapperTest {
         return new ConstraintViolationException(new HashSet<>(violations));
     }
 
-    record TeamRequest(@NotBlank String name, @Valid List<PlayerRequest> players) {
+    record TeamRequest(@NotBlank String name, List<@Valid PlayerRequest> players) {
     }
 
     record PlayerRequest(@Min(0) @Max(99) int jerseyNumber) {

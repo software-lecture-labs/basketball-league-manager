@@ -204,6 +204,7 @@ basketball-league-manager/
 │   ├── adr/                  # Mimari karar kayıtları
 │   ├── api.md                # REST API sözleşmesi
 │   └── testing/              # Mimari test planı
+├── scripts/                  # Demo sezonu betikleri (demo-sezon.sh, demo-sezon.ps1)
 ├── src/main/java/com/basketballleague/
 │   ├── config/               # RestApplication, DataSourceConfig
 │   ├── domain/               # FixtureGenerator, DomainException, record'lar
@@ -345,6 +346,25 @@ curl http://localhost:8080/basketball-league/api/ping
 > Ortam değişkenlerinden biri eksikse veya veritabanına bağlanılamıyorsa uygulama yüklenmez ve
 > `/api/ping` **404** döner. Payara'nın konsol çıktısındaki dağıtım hatasına bakın.
 
+### 7. Demo sezonu (isteğe bağlı)
+
+Migration'lar yalnızca şemayı ve takımları yükler; sezon ve fikstür uygulamadan üretilir. Uygulama çalışırken
+ikinci bir terminalde şu betik, ada göre ilk altı takımla bir demo sezonu oluşturur ve fikstürünü üretir:
+
+```bash
+scripts/demo-sezon.sh          # macOS / Linux (curl ve jq gerekir)
+.\scripts\demo-sezon.ps1       # Windows PowerShell
+```
+
+Takım sayısı değiştirilebilir (`scripts/demo-sezon.sh 8`, `.\scripts\demo-sezon.ps1 -TeamCount 8`; 2-20 arası).
+Betik tekrar çalıştırılabilir: var olan sezonu kullanır, üretilmiş fikstürü yeniden üretmez. Sonrasında fikstür
+`http://localhost:8080/basketball-league/fixtures.html` adresinde görünür. Sayfayı VS Code "Go Live" ile değil,
+Payara üzerinden açın; API yalnızca Payara'da çalışır.
+
+> [!NOTE]
+> Windows "running scripts is disabled" derse betiği bu oturum için izin vererek çalıştırın:
+> `powershell -ExecutionPolicy Bypass -File .\scripts\demo-sezon.ps1`
+
 ---
 
 ## Testler ve kalite
@@ -413,26 +433,23 @@ yalnızca sunucu logundadır.
 
 ## Veri kaynağı
 
-Takım verisi elle hazırlanıp Flyway seed migration'ına yazılır
-(`V2__seed_euroleague_2025_26_teams.sql`). Otomatik veri çekme veya canlı veri API'si kullanılmaz.
+Takım ve kadro verisi, kaynak sayfaların sabit sürümlerinden bir kez hazırlanıp Flyway seed migration'larına
+yazıldı (`V2__seed_euroleague_2025_26_teams.sql`, `V5__seed_euroleague_2025_26_rosters.sql`). Uygulama veri
+çekmez; canlı veri API'si kullanılmaz.
 
 | Bilgi                      | Değer                                                                                          |
 | -------------------------- | ---------------------------------------------------------------------------------------------- |
 | Referans sezonu            | EuroLeague 2025-26 (30 Eylül 2025 - 24 Mayıs 2026), normal sezonun 20 kulübü                   |
-| Kaynak                     | [Wikipedia: 2025–26 EuroLeague](https://en.wikipedia.org/wiki/2025%E2%80%9326_EuroLeague), "Qualified teams" |
-| Alınma tarihi              | 20 Kasım 2026                                                                                  |
-| Veri sürümü                | `euroleague-2025-26-teams-v1`                                                                  |
+| Takım kaynağı              | [Wikipedia: 2025–26 EuroLeague](https://en.wikipedia.org/wiki/2025%E2%80%9326_EuroLeague), "Qualified teams" |
+| Kadro referans tarihi      | 1 Ocak 2026                                                                                    |
+| Kadro kaynağı              | Her kulübün Wikipedia makalesindeki "Current roster" tablosunun bu tarihten önceki son sürümü (beş kulüpte tabloyu taşıyan sezon makalesi); sabit sürüm bağlantıları V5'in başında |
+| Alınma tarihi              | Takımlar 20 Kasım 2026, kadrolar 25 Kasım 2026                                                 |
+| Veri sürümü                | `euroleague-2025-26-teams-v1`, `euroleague-2025-26-rosters-v1`                                 |
 | Takım alanları             | Ad (kaynaktaki yazımıyla, sponsorsuz), şehir (Türkçe yerleşik yazımıyla)                       |
-| Kadrolar                   | Henüz yok; referans tarihi seçilince ayrı bir migration ile eklenecek                          |
-| Oyuncu alanları            | Ad, soyad, forma numarası, pozisyon                                                            |
+| Oyuncu alanları            | Ad, soyad, forma numarası, pozisyon; 20 kulüp, 332 oyuncu                                      |
+| Pozisyon eşlemesi          | PG, SG, SF, PF, C aynen; "X/Y" için ilk rol; G → SG, F → SF, GF → SF, FC → PF, CG → SG          |
+| "00" forma numarası        | Kaynakta bir oyuncu (Armando Bacot) "00"; sayı sütunu "00" ile "0"ı ayıramadığı için 0           |
 | Maç sonuçları, transferler | Uygulamada üretilen demo verisi; resmî EuroLeague sonucu değildir                              |
-
------------------------------------- | ---------------------------------------------------------------------- |
-| Kapsam                               | Tek EuroLeague sezonu, o sezonda tek bir referans tarihindeki kadrolar |
-| Oyuncu alanları                      | Ad, soyad, forma numarası, pozisyon                                    |
-| Referans sezonu ve tarihi            | Henüz seçilmedi (seed PR'ında eklenecek)                               |
-| Kaynak bağlantıları ve alınma tarihi | Seed PR'ında eklenecek                                                 |
-| Maç sonuçları, transferler           | Uygulamada üretilen demo verisi                                        |
 
 ---
 

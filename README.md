@@ -413,26 +413,23 @@ yalnızca sunucu logundadır.
 
 ## Veri kaynağı
 
-Takım verisi elle hazırlanıp Flyway seed migration'ına yazılır
-(`V2__seed_euroleague_2025_26_teams.sql`). Otomatik veri çekme veya canlı veri API'si kullanılmaz.
+Takım ve kadro verisi, kaynak sayfaların sabit sürümlerinden bir kez hazırlanıp Flyway seed migration'larına
+yazıldı (`V2__seed_euroleague_2025_26_teams.sql`, `V4__seed_euroleague_2025_26_rosters.sql`). Uygulama veri
+çekmez; canlı veri API'si kullanılmaz.
 
 | Bilgi                      | Değer                                                                                          |
 | -------------------------- | ---------------------------------------------------------------------------------------------- |
 | Referans sezonu            | EuroLeague 2025-26 (30 Eylül 2025 - 24 Mayıs 2026), normal sezonun 20 kulübü                   |
-| Kaynak                     | [Wikipedia: 2025–26 EuroLeague](https://en.wikipedia.org/wiki/2025%E2%80%9326_EuroLeague), "Qualified teams" |
-| Alınma tarihi              | 20 Kasım 2026                                                                                  |
-| Veri sürümü                | `euroleague-2025-26-teams-v1`                                                                  |
+| Takım kaynağı              | [Wikipedia: 2025–26 EuroLeague](https://en.wikipedia.org/wiki/2025%E2%80%9326_EuroLeague), "Qualified teams" |
+| Kadro referans tarihi      | 1 Ocak 2026                                                                                    |
+| Kadro kaynağı              | Her kulübün Wikipedia makalesindeki "Current roster" tablosunun bu tarihten önceki son sürümü (beş kulüpte tabloyu taşıyan sezon makalesi); sabit sürüm bağlantıları V4'ün başında |
+| Alınma tarihi              | Takımlar 20 Kasım 2026, kadrolar 25 Kasım 2026                                                 |
+| Veri sürümü                | `euroleague-2025-26-teams-v1`, `euroleague-2025-26-rosters-v1`                                 |
 | Takım alanları             | Ad (kaynaktaki yazımıyla, sponsorsuz), şehir (Türkçe yerleşik yazımıyla)                       |
-| Kadrolar                   | Henüz yok; referans tarihi seçilince ayrı bir migration ile eklenecek                          |
-| Oyuncu alanları            | Ad, soyad, forma numarası, pozisyon                                                            |
+| Oyuncu alanları            | Ad, soyad, forma numarası, pozisyon; 20 kulüp, 332 oyuncu                                      |
+| Pozisyon eşlemesi          | PG, SG, SF, PF, C aynen; "X/Y" için ilk rol; G → SG, F → SF, GF → SF, FC → PF, CG → SG          |
+| "00" forma numarası        | Kaynakta bir oyuncu (Armando Bacot) "00"; sayı sütunu "00" ile "0"ı ayıramadığı için 0           |
 | Maç sonuçları, transferler | Uygulamada üretilen demo verisi; resmî EuroLeague sonucu değildir                              |
-
------------------------------------- | ---------------------------------------------------------------------- |
-| Kapsam                               | Tek EuroLeague sezonu, o sezonda tek bir referans tarihindeki kadrolar |
-| Oyuncu alanları                      | Ad, soyad, forma numarası, pozisyon                                    |
-| Referans sezonu ve tarihi            | Henüz seçilmedi (seed PR'ında eklenecek)                               |
-| Kaynak bağlantıları ve alınma tarihi | Seed PR'ında eklenecek                                                 |
-| Maç sonuçları, transferler           | Uygulamada üretilen demo verisi                                        |
 
 ---
 

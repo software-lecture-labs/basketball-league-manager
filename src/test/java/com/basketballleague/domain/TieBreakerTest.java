@@ -172,6 +172,39 @@ class TieBreakerTest {
         }
     }
 
+    // --- 4b. Türkçe Karakterli Takım Adı Testleri ---
+    // compareToIgnoreCase Türkçe özel harfleri ('İ','Ö','Ş','Ü') yanlış sıralar;
+    // Collator(tr-TR) + PRIMARY strength ile bu durumlar düzeltilir.
+
+    @ParameterizedTest(name = "Türkçe: ''{0}'' vs ''{1}'' beklenen: {2}")
+    @CsvSource({
+            // 'İ' Türkçe alfabesinde 'I' ile farklı; compareToIgnoreCase bunu yanlış sıralıyordu
+            "İstanbul Hawks, Juventus Roma, -1",
+            // 'Ö' 'O'dan sonra, 'P'den önce
+            "Özel Spor, Panathinaikos, -1",
+            // 'Ş' 'S'den sonra, 'T'den önce
+            "Şanlıurfa Spor, Trabzonspor, -1",
+            // 'Ü' 'U'dan sonra
+            "Üsküdar Basket, Valencia Basket, -1",
+            // PRIMARY strength: 'İ' ve 'i' aynı temel karaktere sahip -> eşit
+            "İzmir Basket, izmir basket, 0"
+    })
+    void teamNameTieBreakerHandlesTurkishCharacters(String nameA, String nameB, int expectedSign) {
+        final TieBreaker breaker = new TeamNameTieBreaker();
+
+        final TeamStanding a = TeamStanding.of(1L, nameA, 5, 5, 800, 800, pointsPolicy);
+        final TeamStanding b = TeamStanding.of(2L, nameB, 5, 5, 800, 800, pointsPolicy);
+
+        final int result = breaker.breakTie(a, b);
+        if (expectedSign < 0) {
+            assertThat(result).isNegative();
+        } else if (expectedSign > 0) {
+            assertThat(result).isPositive();
+        } else {
+            assertThat(result).isZero();
+        }
+    }
+
     // --- 5. Zincir (Chain: İkili Averaj -> Genel Averaj -> Atılan Sayı -> Takım Adı) Entegrasyon Testleri ---
 
     @Test
@@ -252,14 +285,15 @@ class TieBreakerTest {
         final StandingsComparator comparator = StandingsComparator.ofStandard(matches, pointsPolicy);
 
         // Real & Efes have equal points (18), but Real has H2H advantage -> Real should be #1, Efes #2
-        final TeamStanding efes = TeamStanding.of(efesId, "Anadolu Efes", 8, 2, 850, 800, pointsPolicy); // 18 pts
-        final TeamStanding real = TeamStanding.of(realId, "Real Madrid", 8, 2, 840, 800, pointsPolicy);  // 18 pts
+        final TeamStanding efes = TeamStanding.of(efesId, "Anadolu Efes", 8, 2, 850, 800, pointsPolicy);
+        final TeamStanding real = TeamStanding.of(realId, "Real Madrid", 8, 2, 840, 800, pointsPolicy);
 
-        // Pao & Fener have equal points (16), no H2H, but Pao has better overall point difference (+30 vs +10) -> Pao #3, Fener #4
-        final TeamStanding pao = TeamStanding.of(paoId, "Panathinaikos", 6, 4, 820, 790, pointsPolicy);   // 16 pts, diff +30
-        final TeamStanding fener = TeamStanding.of(fenerId, "Fenerbahçe Beko", 6, 4, 800, 790, pointsPolicy); // 16 pts, diff +10
+        // Pao & Fener have equal points (16) and no H2H; Pao has the better overall point difference
+        // (+30 vs +10) -> Pao #3, Fener #4
+        final TeamStanding pao = TeamStanding.of(paoId, "Panathinaikos", 6, 4, 820, 790, pointsPolicy);
+        final TeamStanding fener = TeamStanding.of(fenerId, "Fenerbahçe Beko", 6, 4, 800, 790, pointsPolicy);
 
-        // Milano has 0 matches played (new team in season, maçı olmayan takım sıfırla görünür) -> #5
+        // Milano has 0 matches played -> #5
         final TeamStanding milano = TeamStanding.zero(milanoId, "EA7 Olimpia Milano"); // 0 pts
 
         final List<TeamStanding> table = new ArrayList<>(List.of(efes, milano, fener, pao, real));

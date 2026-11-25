@@ -22,7 +22,8 @@ public record MatchResult(
             throw new IllegalArgumentException("Scores cannot be negative: " + homeScore + " - " + awayScore);
         }
         if (homeScore == awayScore) {
-            throw new IllegalArgumentException("Basketball matches cannot end in a draw: " + homeScore + " - " + awayScore);
+            throw new IllegalArgumentException(
+                    "Basketball matches cannot end in a draw: " + homeScore + " - " + awayScore);
         }
     }
 

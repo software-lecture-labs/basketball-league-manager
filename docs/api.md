@@ -314,7 +314,8 @@ bütün satırlar sıfırdır.
 ## Bilinen sınırlar
 
 - Aynı ad veya forma numarası iki istekte aynı anda gönderilirse kontrolü ikisi de geçebilir; ikinci kayıt
-  veritabanı kısıtına takılır. Bu durumun 409'a çevrilmesi #13'te. Aynı adla iki sezon için de geçerlidir.
+  veritabanı kısıtına takılır ve 409 `DATA_CONFLICT` döner (kurala özel kod yerine). Aynı adla iki sezon için de
+  geçerlidir.
 - Sezona takım ekleme ve fikstür üretme sezon satırını kilitler (`SELECT … FOR UPDATE`); aynı sezona gelen
   eşzamanlı istekler sırayla işlenir. Takım sınırı ve tekillik atlanamaz, fikstür iki kez üretilemez ve fikstür
   üretilirken sezona takım eklenemez.

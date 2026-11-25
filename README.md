@@ -443,6 +443,7 @@ Takım verisi elle hazırlanıp Flyway seed migration'ına yazılır
 | [ADR-0001](docs/adr/0001-katmanli-mimari.md)            | Katmanlı monolit, EuroLeague veri kapsamı, puan durumunu hesaplama | Kabul edildi |
 | [ADR-0002](docs/adr/0002-jakarta-ee-ve-payara-micro.md) | Jakarta EE 11 Web Profile ve Payara Micro                          | Kabul edildi |
 | [ADR-0003](docs/adr/0003-entity-domain-modeli.md)       | Entity'ler domain nesnesi, sezon ve maç durum makineleri           | Önerildi     |
+| [ADR-0004](docs/adr/0004-mac-onayi-transaction.md)      | Maç sonucu, onay transaction'ı ve eşzamanlı değişiklikler          | Önerildi     |
 | [ADR-0006](docs/adr/0006-hata-yonetimi-ve-loglama.md)   | Hata yönetimi ve loglama politikası                                | Kabul edildi |
 | [ADR-0008](docs/adr/0008-fikstur-algoritmasi.md)        | Fikstür üretimi için circle method                                 | Kabul edildi |
 

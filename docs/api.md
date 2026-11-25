@@ -281,6 +281,36 @@ Location: http://localhost:8080/basketball-league/api/seasons/1/fixtures
 | 409 | `INVALID_FIXTURE_INPUT` | sezonda 2'den az takım var |
 | 409 | `SEASON_ALREADY_STARTED` | fikstür zaten üretilmiş |
 
+## Puan durumu
+
+Puan durumu saklanmaz; her okumada sezonun yalnızca `CONFIRMED` maçlarından hesaplanır
+([ADR-0001](adr/0001-katmanli-mimari.md)). Galibiyet 2, mağlubiyet 1 puandır.
+
+### `GET /seasons/{id}/standings`
+
+Sezonun bütün takımlarını sıralı döner. Onaylı maçı olmayan takım sıfırlarla listelenir. Bir sezonda en fazla
+20 takım olduğu için yanıt sayfalı değildir; bir dizidir.
+
+Sıralama: lig puanı → ikili averaj (aralarındaki maçlar) → genel averaj (`pointDiff`) → atılan sayı → takım adı
+(Türk alfabesine göre).
+
+```json
+200 OK
+[
+  {
+    "rank": 1, "teamId": 1, "teamName": "Anadolu Efes",
+    "played": 2, "won": 2, "lost": 0, "pointsFor": 170, "pointsAgainst": 130, "pointDiff": 40, "leaguePoints": 4
+  }
+]
+```
+
+| Durum | `code` |
+| --- | --- |
+| 404 | `SEASON_NOT_FOUND` |
+
+Maç sonucu girişi ve onay ([ADR-0004](adr/0004-mac-onayi-transaction.md)) gelene kadar onaylı maç olmadığı için
+bütün satırlar sıfırdır.
+
 ## Bilinen sınırlar
 
 - Aynı ad veya forma numarası iki istekte aynı anda gönderilirse kontrolü ikisi de geçebilir; ikinci kayıt
@@ -289,3 +319,6 @@ Location: http://localhost:8080/basketball-league/api/seasons/1/fixtures
   eşzamanlı istekler sırayla işlenir. Takım sınırı ve tekillik atlanamaz, fikstür iki kez üretilemez ve fikstür
   üretilirken sezona takım eklenemez.
 - Liste sıralaması veritabanının sıralama kuralını (collation) kullanır; Türkçe `Collator` ile sıralama yoktur.
+  Puan durumundaki son eşitlik bozma adımı (takım adı) bunun istisnasıdır; Türkçe `Collator` kullanır.
+- Üç veya daha fazla takım eşit puanlıysa ikili averaj takımlar ikişer ikişer karşılaştırılarak uygulanır; mini lig
+  hesaplanmaz (kapsam dışı).

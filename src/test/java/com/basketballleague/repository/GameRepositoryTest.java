@@ -2,6 +2,7 @@ package com.basketballleague.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
@@ -56,5 +57,15 @@ class GameRepositoryTest {
         when(gameQuery.getResultList()).thenReturn(games);
 
         assertThat(repository.findBySeasonId(5L)).isEqualTo(games);
+    }
+
+    @Test
+    void findConfirmedBySeasonIdAsksOnlyForTheSeasonsConfirmedGames() {
+        final List<Game> games = List.of(new Game(5L, 1, 10L, 20L));
+        when(em.createQuery(contains("CONFIRMED"), eq(Game.class))).thenReturn(gameQuery);
+        when(gameQuery.setParameter("seasonId", 5L)).thenReturn(gameQuery);
+        when(gameQuery.getResultList()).thenReturn(games);
+
+        assertThat(repository.findConfirmedBySeasonId(5L)).isEqualTo(games);
     }
 }

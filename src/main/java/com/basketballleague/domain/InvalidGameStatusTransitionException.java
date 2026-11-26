@@ -15,4 +15,9 @@ public final class InvalidGameStatusTransitionException extends DomainException 
         super(ErrorCode.INVALID_GAME_STATUS_TRANSITION,
                 "Game " + gameId + " cannot move from " + from + " to " + to);
     }
+
+    public InvalidGameStatusTransitionException(Long gameId, GameStatus current, String action) {
+        super(ErrorCode.INVALID_GAME_STATUS_TRANSITION,
+                "Game " + gameId + " cannot " + action + " while " + current);
+    }
 }

@@ -281,6 +281,142 @@ Location: http://localhost:8080/basketball-league/api/seasons/1/fixtures
 | 409 | `INVALID_FIXTURE_INPUT` | sezonda 2'den az takım var |
 | 409 | `SEASON_ALREADY_STARTED` | fikstür zaten üretilmiş |
 
+## Maçlar
+
+> Bu bölüm 3.4a (maç sonucu girişi ve onay) ile uygulanacak sözleşmedir; uç noktalar henüz yoktur. Kararlar
+> [ADR-0004](adr/0004-mac-onayi-transaction.md)'tedir.
+
+Maç `SCHEDULED → LIVE → FINISHED → CONFIRMED` akışını izler. Bitmiş maç onaydan önce yeniden açılabilir
+(`FINISHED → LIVE`); onaylanmış maç değişmez. Çeyrek skorları ve oyuncu sayıları maçın parçasıdır.
+
+| İşlem | Uç nokta | Durum geçişi | Yapılabildiği durum |
+| --- | --- | --- | --- |
+| Başlat | `POST /games/{id}/start` | `SCHEDULED → LIVE` | `SCHEDULED` |
+| Çeyrekleri kaydet | `PUT /games/{id}/quarters` | yok | `LIVE` |
+| Oyuncu sayılarını kaydet | `PUT /games/{id}/stats` | yok | `LIVE`, `FINISHED` |
+| Bitir | `POST /games/{id}/finish` | `LIVE → FINISHED` | `LIVE` |
+| Yeniden aç | `POST /games/{id}/reopen` | `FINISHED → LIVE` | `FINISHED` |
+| Onayla | `POST /games/{id}/confirm` | `FINISHED → CONFIRMED` | `FINISHED` |
+
+**Sürüm:** Maçı değiştiren her istek, yöneticinin son okuduğu `version` değerini gövdede taşır. Maç o arada başka
+bir istekle değiştiyse 409 `CONCURRENT_UPDATE` döner; istemci maçı yeniden okuyup tekrar dener. Başarılı her
+değişiklik `version`'ı artırır ve güncel maçı döner.
+
+### `GET /games/{id}`
+
+```json
+200 OK
+{
+  "id": 10,
+  "seasonId": 1,
+  "roundNumber": 1,
+  "homeTeam": { "id": 1, "name": "Anadolu Efes", "city": "İstanbul" },
+  "awayTeam": { "id": 9, "name": "Fenerbahçe", "city": "İstanbul" },
+  "status": "FINISHED",
+  "homeScore": 84,
+  "awayScore": 80,
+  "quarters": [
+    { "quarterNo": 1, "homePoints": 22, "awayPoints": 18 },
+    { "quarterNo": 2, "homePoints": 20, "awayPoints": 21 },
+    { "quarterNo": 3, "homePoints": 19, "awayPoints": 20 },
+    { "quarterNo": 4, "homePoints": 23, "awayPoints": 21 }
+  ],
+  "playerPoints": [
+    { "playerId": 7, "teamId": 1, "points": 21 },
+    { "playerId": 40, "teamId": 9, "points": 17 }
+  ],
+  "version": 6
+}
+```
+
+- `homeScore` ve `awayScore` yalnızca `FINISHED` ve `CONFIRMED` maçta bulunur; çeyrek toplamlarından hesaplanır,
+  istemci göndermez.
+- `playerPoints[].teamId` oyuncunun sayının girildiği andaki takımıdır; sonradan yapılan transfer onu değiştirmez.
+- Örnekte `playerPoints` kısaltılmıştır; onay için her takımın oyuncu sayıları toplamı takım skoruna eşit olmalıdır.
+
+| Durum | `code` |
+| --- | --- |
+| 404 | `GAME_NOT_FOUND` |
+
+### `POST /games/{id}/start`, `/finish`, `/reopen`, `/confirm`
+
+```json
+{ "version": 6 }
+```
+
+```text
+200 OK   (güncel maç, GET /games/{id} biçiminde)
+```
+
+| Durum | `code` | Ne zaman |
+| --- | --- | --- |
+| 400 | `VALIDATION_FAILED` | `version` yok veya negatif |
+| 404 | `GAME_NOT_FOUND` | maç yok |
+| 409 | `INVALID_GAME_STATUS_TRANSITION` | geçiş tablodaki durumdan yapılmıyor (ör. `SCHEDULED` maçı onaylamak) |
+| 409 | `INVALID_QUARTER_SCORE` | `finish` veya `confirm`: 4'ten az çeyrek var |
+| 409 | `OVERTIME_REQUIRED` | `finish`: skor eşit; uzatma çeyreği girilmeli |
+| 409 | `SCORE_MISMATCH` | `confirm`: çeyrek toplamları veya bir takımın oyuncu sayıları toplamı skora eşit değil |
+| 409 | `CONCURRENT_UPDATE` | `version` güncel değil veya aynı anda başka bir değişiklik kaydedildi |
+
+### `PUT /games/{id}/quarters`
+
+Maçın bütün çeyreklerini bir arada değiştirir; gönderilmeyen çeyrek silinir.
+
+```json
+{
+  "version": 3,
+  "quarters": [
+    { "quarterNo": 1, "homePoints": 22, "awayPoints": 18 },
+    { "quarterNo": 2, "homePoints": 20, "awayPoints": 21 }
+  ]
+}
+```
+
+| Alan | Kural |
+| --- | --- |
+| `version` | zorunlu, 0 veya büyük |
+| `quarters` | zorunlu; `quarterNo` 1'den başlar ve boşluksuz artar; sayılar 0 veya büyük |
+| Uzatma | 5. ve sonraki çeyrek yalnızca önceki çeyrekler sonunda skor eşitse girilebilir |
+
+| Durum | `code` | Ne zaman |
+| --- | --- | --- |
+| 400 | `VALIDATION_FAILED` | alan eksik, sayı negatif |
+| 404 | `GAME_NOT_FOUND` | maç yok |
+| 409 | `INVALID_GAME_STATUS_TRANSITION` | maç `LIVE` değil |
+| 409 | `INVALID_QUARTER_SCORE` | çeyrek sırası boşluklu veya tekrarlı, gereksiz uzatma |
+| 409 | `CONCURRENT_UPDATE` | `version` güncel değil |
+
+### `PUT /games/{id}/stats`
+
+Maçın bütün oyuncu sayılarını bir arada değiştirir; gönderilmeyen oyuncunun sayısı silinir. Oyuncunun takımı
+sunucuda belirlenir.
+
+```json
+{
+  "version": 5,
+  "players": [
+    { "playerId": 7, "points": 21 },
+    { "playerId": 40, "points": 17 }
+  ]
+}
+```
+
+| Alan | Kural |
+| --- | --- |
+| `version` | zorunlu, 0 veya büyük |
+| `players` | zorunlu; her oyuncu bir kez; `points` 0 veya büyük |
+
+| Durum | `code` | Ne zaman |
+| --- | --- | --- |
+| 400 | `VALIDATION_FAILED` | alan eksik, sayı negatif, aynı oyuncu iki kez |
+| 404 | `GAME_NOT_FOUND` | maç yok |
+| 409 | `INVALID_GAME_STATUS_TRANSITION` | maç `LIVE` veya `FINISHED` değil |
+| 409 | `PLAYER_NOT_IN_GAME` | oyuncu yok ya da maçın iki takımından birinde değil |
+| 409 | `CONCURRENT_UPDATE` | `version` güncel değil |
+
+Negatif sayı ve tekrarlanan oyuncu önce istek doğrulamasında 400 döner. Aynı kurallar `Game` içinde de denetlenir
+(409 `INVALID_PLAYER_POINTS`, ADR-0004); bu kod yalnızca doğrulamayı atlayan bir çağrıda görülür.
+
 ## Puan durumu
 
 Puan durumu saklanmaz; her okumada sezonun yalnızca `CONFIRMED` maçlarından hesaplanır

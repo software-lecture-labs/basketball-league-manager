@@ -8,12 +8,14 @@ import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS;
 
 import com.basketballleague.domain.DomainException;
+import com.tngtech.archunit.core.domain.properties.CanBeAnnotated;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.CompositeArchRule;
 import jakarta.inject.Inject;
+import jakarta.persistence.Embeddable;
 import jakarta.persistence.Entity;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
@@ -110,7 +112,9 @@ class ArchitectureTest {
     // which unit tests without a JPA provider do not notice.
     @ArchTest
     static final ArchRule ENTITY_FIELDS_ARE_NOT_FINAL = noFields()
-            .that().areDeclaredInClassesThat().areAnnotatedWith(Entity.class)
+            .that().areDeclaredInClassesThat(
+                    CanBeAnnotated.Predicates.annotatedWith(Entity.class)
+                            .or(CanBeAnnotated.Predicates.annotatedWith(Embeddable.class)))
             .and().areNotStatic()
             .should().beFinal()
             .because("the JPA provider sets persistent fields after the entity is constructed (Jakarta Persistence §2.1)");

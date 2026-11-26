@@ -1,6 +1,6 @@
 ---
 title: ADR-0004-Maç Sonucu, Onay Transaction'ı ve Eşzamanlı Değişiklikler
-status: Önerildi
+status: Kabul Edildi
 date: 2026-11-25
 author: Ömer Ünlü
 deciders: Ömer Ünlü, Osman Balcı, Mustafa Budak
@@ -93,7 +93,8 @@ yazar. Toplamlar `Math.addExact` ile hesaplanır; taşma sessizce geçmez.
 | Çeyrek sırası, negatif sayı, gereksiz uzatma      | 409  | `INVALID_QUARTER_SCORE`          |
 | Normal süre berabere bitti, uzatma girilmedi      | 409  | `OVERTIME_REQUIRED`              |
 | Oyuncu maçın iki takımından birinde değil         | 409  | `PLAYER_NOT_IN_GAME`             |
-| Oyuncu sayıları takım skoruyla uyuşmuyor          | 409  | `SCORE_MISMATCH`                 |
+| Oyuncu sayısı kaydı geçersiz (negatif, tekrar)    | 409  | `INVALID_PLAYER_POINTS`          |
+| Çeyrek toplamı veya oyuncu sayıları skora uymuyor | 409  | `SCORE_MISMATCH`                 |
 | Gönderilen sürüm güncel değil / commit'te çakışma | 409  | `CONCURRENT_UPDATE`              |
 
 Uç noktaların istek ve yanıt örnekleri sonuç girişi PR'ında (3.4a) `docs/api.md`'ye yazılır.
@@ -105,7 +106,7 @@ Uç noktaların istek ve yanıt örnekleri sonuç girişi PR'ında (3.4a) `docs/
 | Çeyrek skoru ve istatistiği ayrı entity'ler (kendi repository'leri) | PR #5'teki riskin kaynağı: ayrı satırlar değişince maçın sürümü artmaz. Kurallar (sıra, uzatma, toplam) iki nesneye bölünür.                                                   |
 | Onayda maç satırını `PESSIMISTIC_WRITE` ile kilitlemek              | Yalnızca çeyrek ve istatistik yazan bütün işlemler de aynı satırı kilitlerse işe yarar. Yöneticinin ekranda gördüğü eski veriyi yine fark etmez. Canlı skordaki iyimser yaklaşımla iki ayrı strateji oluşur. |
 | Yalnızca sunucu tarafında `@Version` (istemci sürüm göndermez)      | Aynı anda çalışan iki işlemi ayırır, ama yönetici sayfayı açtıktan sonra yapılan değişikliği görmeden onaylayabilir.                                                           |
-| Sürümü `ETag` / `If-Match` başlığıyla taşımak [4]                   | HTTP açısından doğru yol, ama her maç yanıtına `ETag` ve 412/428 kodları gerekir; ADR-0006 çakışmayı 409 ile tanımlar. Gerekirse ADR-0005'te yeniden değerlendirilir.         |
+| Sürümü `ETag` / `If-Match` başlığıyla taşımak [4]                   | HTTP açısından doğru yol, ama her maç yanıtına `ETag` ve 412/428 kodları gerekir; ADR-0006 çakışmayı 409 ile tanımlar. Gerekirse yeni bir ADR ile yeniden değerlendirilir.    |
 | Maç skorunu saklamamak, her okumada çeyreklerden hesaplamak          | Puan durumu sorgusu her maç için çeyrek tablosunu toplamak zorunda kalır. Onaylı maçın skoru zaten değişmez.                                                                  |
 | Maç skorunu kullanıcının ayrıca girmesi                              | Aynı bilginin iki kaynağı olur; çeyrek toplamıyla uyuşmazlık yeni bir hata türü doğurur.                                                                                        |
 | Bitmiş maçta düzeltme yok (`FINISHED → LIVE` yok)                   | Veri girişindeki bir yanlışlık ancak veritabanına elle müdahaleyle düzeltilebilir.                                                                                             |

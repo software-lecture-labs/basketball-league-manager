@@ -235,11 +235,10 @@ basketball-league-manager/
 | Maven Wrapper               | —                        | Derleme; ayrıca Maven kurmak gerekmez  |
 | JUnit 5 · AssertJ · Mockito | 5.14.4 · 3.27.7 · 5.24.0 | Birim testleri                         |
 | ArchUnit                    | 1.5.1                    | Mimari kuralların testi                |
-| JaCoCo                      | 0.8.15                   | Test kapsamı raporu                    |
-| Flyway (Maven eklentisi)    | 13.12.2                  | Şema migration'ları                    |
+| JaCoCo                      | 0.8.16                   | Test kapsamı raporu                    |
+| Flyway                      | 13.13.0                  | Şema migration'ları                    |
+| Testcontainers · EclipseLink | 2.0.5 · 5.0.0           | PostgreSQL 18 entegrasyon testleri     |
 | SLF4J + `slf4j-jdk14`       | 2.0.20                   | Loglama (ADR-0006)                     |
-
-**Planlanan:** Testcontainers (gerçek PostgreSQL ile entegrasyon testleri). Henüz `pom.xml`'de değildir.
 
 ---
 
@@ -370,12 +369,19 @@ Payara üzerinden açın; API yalnızca Payara'da çalışır.
 ## Testler ve kalite
 
 ```bash
-./mvnw -B clean verify        # macOS / Linux
-.\mvnw.cmd -B clean verify    # Windows
+./mvnw -B clean verify        # macOS / Linux (Docker gerekir: *IT entegrasyon testleri)
+.\mvnw.cmd -B clean verify    # Windows (Docker gerekir: *IT entegrasyon testleri)
 ```
 
-Bu komut derler, birim ve mimari testleri çalıştırır ve JaCoCo raporunu `target/site/jacoco/index.html`
-dosyasına yazar.
+Yalnızca birim ve mimari testleri Docker olmadan çalıştırmak için:
+
+```bash
+./mvnw -B test                # macOS / Linux
+.\mvnw.cmd -B test            # Windows
+```
+
+`verify` komutu derler, birim ve mimari testler ile Testcontainers PostgreSQL 18 entegrasyon testlerini (`*IT`)
+koşar ve JaCoCo raporunu `target/site/jacoco/index.html` dosyasına yazar.
 
 **Mimari testler** ([ArchitectureTest](src/test/java/com/basketballleague/architecture/ArchitectureTest.java))
 derleyicinin yakalayamadığı kuralları korur:
@@ -460,8 +466,8 @@ yazıldı (`V2__seed_euroleague_2025_26_teams.sql`, `V5__seed_euroleague_2025_26
 | ------------------------------------------------------- | ------------------------------------------------------------------ | ------------ |
 | [ADR-0001](docs/adr/0001-katmanli-mimari.md)            | Katmanlı monolit, EuroLeague veri kapsamı, puan durumunu hesaplama | Kabul edildi |
 | [ADR-0002](docs/adr/0002-jakarta-ee-ve-payara-micro.md) | Jakarta EE 11 Web Profile ve Payara Micro                          | Kabul edildi |
-| [ADR-0003](docs/adr/0003-entity-domain-modeli.md)       | Entity'ler domain nesnesi, sezon ve maç durum makineleri           | Önerildi     |
-| [ADR-0004](docs/adr/0004-mac-onayi-transaction.md)      | Maç sonucu, onay transaction'ı ve eşzamanlı değişiklikler          | Önerildi     |
+| [ADR-0003](docs/adr/0003-entity-domain-modeli.md)       | Entity'ler domain nesnesi, sezon ve maç durum makineleri           | Kabul edildi |
+| [ADR-0004](docs/adr/0004-mac-onayi-transaction.md)      | Maç sonucu, onay transaction'ı ve eşzamanlı değişiklikler          | Kabul edildi |
 | [ADR-0006](docs/adr/0006-hata-yonetimi-ve-loglama.md)   | Hata yönetimi ve loglama politikası                                | Kabul edildi |
 | [ADR-0008](docs/adr/0008-fikstur-algoritmasi.md)        | Fikstür üretimi için circle method                                 | Kabul edildi |
 

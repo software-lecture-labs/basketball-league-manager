@@ -62,8 +62,7 @@ Birim testleri iş davranışını, repository entegrasyon testleri migration ve
 Mockito gerçek JPA/CDI davranışını, ArchUnit hesapların doğruluğunu kanıtlamaz.
 Payara üzerinden HTTP kontrolü dağıtımı doğrular; sınır değer testlerinin yerini almaz.
 
-Mevcut [CI iş akışı] `verify` çalıştırır ve JaCoCo raporunu saklar. ArchUnit ve Testcontainers/Failsafe henüz yoktur;
-yeşil build planın tamamlandığı anlamına gelmez. Yeni kontroller ilgili özellik PR'larında eklenecektir.
+Mevcut [CI iş akışı] `verify` çalıştırır, birim/ArchUnit testleri ile Testcontainers (`*IT`) entegrasyon testlerini koşar ve JaCoCo raporunu saklar. Maç onayı rollback testleri (#28) onay servisi ile birlikte eklenecektir.
 
 [CI iş akışı]: ../../.github/workflows/build.yml
 [ders notu]:

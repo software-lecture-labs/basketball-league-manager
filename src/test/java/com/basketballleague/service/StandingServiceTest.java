@@ -11,6 +11,9 @@ import static org.mockito.Mockito.when;
 
 import com.basketballleague.domain.SeasonNotFoundException;
 import com.basketballleague.dto.StandingResponse;
+import com.basketballleague.entity.Game;
+import com.basketballleague.entity.PlayerPoints;
+import com.basketballleague.entity.QuarterScore;
 import com.basketballleague.entity.Season;
 import com.basketballleague.entity.Team;
 import com.basketballleague.repository.GameRepository;
@@ -20,6 +23,7 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -27,7 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Ranking rules with real scores are tested in {@code StandingsTableTest}; this class checks the loading and the
- * response mapping. Until result entry (ADR-0004) no game can be confirmed, so the confirmed list is empty here.
+ * response mapping, including that a confirmed game's stored score reaches the table.
  */
 @ExtendWith(MockitoExtension.class)
 class StandingServiceTest {
@@ -79,6 +83,29 @@ class StandingServiceTest {
                 new StandingResponse(1, 1L, "Anadolu Efes", 0, 0, 0, 0, 0, 0, 0),
                 new StandingResponse(2, 2L, "Panathinaikos", 0, 0, 0, 0, 0, 0, 0),
                 new StandingResponse(3, 3L, "Real Madrid", 0, 0, 0, 0, 0, 0, 0));
+    }
+
+    @Test
+    void confirmedGameCountsWithItsStoredScore() {
+        givenSeasonWithTeams(team(1L, "Anadolu Efes"), team(9L, "Fenerbahçe Beko"));
+        when(gameRepository.findConfirmedBySeasonId(SEASON_ID)).thenReturn(List.of(confirmedGame(1L, 9L)));
+
+        final List<StandingResponse> standings = service().calculateStandings(SEASON_ID);
+
+        assertThat(standings).containsExactly(
+                new StandingResponse(1, 1L, "Anadolu Efes", 1, 1, 0, 84, 80, 4, 2),
+                new StandingResponse(2, 9L, "Fenerbahçe Beko", 1, 0, 1, 80, 84, -4, 1));
+    }
+
+    /** An 84-80 home win, confirmed through the real domain methods. */
+    private static Game confirmedGame(long homeTeamId, long awayTeamId) {
+        final Game game = withId(new Game(SEASON_ID, 1, homeTeamId, awayTeamId), 10L);
+        game.start();
+        game.recordQuarters(IntStream.rangeClosed(1, 4).mapToObj(number -> new QuarterScore(number, 21, 20)).toList());
+        game.finish();
+        game.recordPlayerPoints(List.of(new PlayerPoints(7L, homeTeamId, 84), new PlayerPoints(40L, awayTeamId, 80)));
+        game.confirm(game.getVersion());
+        return game;
     }
 
     @Test

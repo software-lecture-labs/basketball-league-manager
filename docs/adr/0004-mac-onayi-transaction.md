@@ -93,7 +93,8 @@ yazar. Toplamlar `Math.addExact` ile hesaplanır; taşma sessizce geçmez.
 | Çeyrek sırası, negatif sayı, gereksiz uzatma      | 409  | `INVALID_QUARTER_SCORE`          |
 | Normal süre berabere bitti, uzatma girilmedi      | 409  | `OVERTIME_REQUIRED`              |
 | Oyuncu maçın iki takımından birinde değil         | 409  | `PLAYER_NOT_IN_GAME`             |
-| Oyuncu sayıları takım skoruyla uyuşmuyor          | 409  | `SCORE_MISMATCH`                 |
+| Oyuncu sayısı kaydı geçersiz (negatif, tekrar)    | 409  | `INVALID_PLAYER_POINTS`          |
+| Çeyrek toplamı veya oyuncu sayıları skora uymuyor | 409  | `SCORE_MISMATCH`                 |
 | Gönderilen sürüm güncel değil / commit'te çakışma | 409  | `CONCURRENT_UPDATE`              |
 
 Uç noktaların istek ve yanıt örnekleri sonuç girişi PR'ında (3.4a) `docs/api.md`'ye yazılır.

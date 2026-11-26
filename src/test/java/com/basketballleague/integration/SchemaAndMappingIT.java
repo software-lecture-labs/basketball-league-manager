@@ -27,7 +27,8 @@ import org.junit.jupiter.api.Test;
  */
 class SchemaAndMappingIT extends PostgresIntegrationSupport {
 
-    private static final String SQLSTATE_FOREIGN_KEY_VIOLATION = "23503";
+    /** PostgreSQL reports {@code ON DELETE RESTRICT} as restrict_violation, not foreign_key_violation. */
+    private static final String SQLSTATE_RESTRICT_VIOLATION = "23001";
     private static final String SQLSTATE_UNIQUE_VIOLATION = "23505";
     private static final String SQLSTATE_CHECK_VIOLATION = "23514";
 
@@ -100,7 +101,7 @@ class SchemaAndMappingIT extends PostgresIntegrationSupport {
             // ON DELETE RESTRICT keeps teams referenced by players
             assertSqlState(conn,
                     "DELETE FROM teams WHERE id = " + firstTeamId,
-                    SQLSTATE_FOREIGN_KEY_VIOLATION);
+                    SQLSTATE_RESTRICT_VIOLATION);
 
             final long seasonId = insertSeason(conn, "Constraint Sezonu");
             assertSqlState(conn,
@@ -170,7 +171,7 @@ class SchemaAndMappingIT extends PostgresIntegrationSupport {
                     SQLSTATE_CHECK_VIOLATION);
             assertSqlState(conn,
                     "DELETE FROM players WHERE id = " + playerId,
-                    SQLSTATE_FOREIGN_KEY_VIOLATION);
+                    SQLSTATE_RESTRICT_VIOLATION);
 
             // Deleting the parent game cascades to quarter scores and player stats
             executeSql(conn, "DELETE FROM games WHERE id = " + gameId);
@@ -205,10 +206,12 @@ class SchemaAndMappingIT extends PostgresIntegrationSupport {
             final Game game = new Game(season.getId(), 1, first.getId(), second.getId());
             em.persist(game);
             em.flush();
+            final long versionAfterInsert = game.getVersion();
             game.start();
             em.flush();
 
-            return new long[]{first.getId(), second.getId(), player.getId(), season.getId(), game.getId()};
+            return new long[]{first.getId(), second.getId(), player.getId(), season.getId(), game.getId(),
+                    versionAfterInsert};
         });
 
         readOnly(em -> {
@@ -224,14 +227,15 @@ class SchemaAndMappingIT extends PostgresIntegrationSupport {
             assertThat(player.getPosition()).isEqualTo(Position.PG);
 
             assertThat(season.getStatus()).isEqualTo(SeasonStatus.ACTIVE);
-            assertThat(season.getTeamIds()).containsExactly(ids[0], ids[1]);
+            assertThat(season.getTeamIds()).containsExactlyInAnyOrder(ids[0], ids[1]);
 
             assertThat(game.getSeasonId()).isEqualTo(ids[3]);
             assertThat(game.getRoundNumber()).isEqualTo(1);
             assertThat(game.getHomeTeamId()).isEqualTo(ids[0]);
             assertThat(game.getAwayTeamId()).isEqualTo(ids[1]);
             assertThat(game.getStatus()).isEqualTo(GameStatus.LIVE);
-            assertThat(game.getVersion()).isEqualTo(1L);
+            // The provider picks the initial version (EclipseLink: 1); each update adds exactly one.
+            assertThat(game.getVersion()).isEqualTo(ids[5] + 1);
             return null;
         });
     }

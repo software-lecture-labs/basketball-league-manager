@@ -178,9 +178,12 @@ class RepositoryIntegrationIT extends PostgresIntegrationSupport {
 
         readOnly(em -> {
             final GameRepository games = new GameRepository(em);
-            assertThat(games.findBySeasonId(ids[0]))
-                    .extracting(Game::getId)
-                    .containsExactly(ids[1], ids[2], ids[3]);
+            // Ordered by round; the provider may insert same-round games in any order, so ids within
+            // round 1 are not compared positionally.
+            final List<Game> fixture = games.findBySeasonId(ids[0]);
+            assertThat(fixture).extracting(Game::getRoundNumber).containsExactly(1, 1, 2);
+            assertThat(fixture).extracting(Game::getId).containsExactlyInAnyOrder(ids[1], ids[2], ids[3]);
+            assertThat(fixture.getLast().getId()).isEqualTo(ids[3]);
 
             final List<Game> confirmed = games.findConfirmedBySeasonId(ids[0]);
             assertThat(confirmed).hasSize(1);
@@ -205,14 +208,15 @@ class RepositoryIntegrationIT extends PostgresIntegrationSupport {
 
         final EntityManager firstEm = emf().createEntityManager();
         final EntityManager secondEm = emf().createEntityManager();
+        final long initialVersion;
         try {
             firstEm.getTransaction().begin();
             secondEm.getTransaction().begin();
 
             final Game firstCopy = firstEm.find(Game.class, gameId);
             final Game secondCopy = secondEm.find(Game.class, gameId);
-            assertThat(firstCopy.getVersion()).isZero();
-            assertThat(secondCopy.getVersion()).isZero();
+            initialVersion = firstCopy.getVersion();
+            assertThat(secondCopy.getVersion()).isEqualTo(initialVersion);
 
             firstCopy.start();
             firstEm.getTransaction().commit();
@@ -235,7 +239,8 @@ class RepositoryIntegrationIT extends PostgresIntegrationSupport {
         readOnly(em -> {
             final Game persisted = em.find(Game.class, gameId);
             assertThat(persisted.getStatus()).isEqualTo(GameStatus.LIVE);
-            assertThat(persisted.getVersion()).isEqualTo(1L);
+            // Only the first copy's update was committed: exactly one increment from the shared version.
+            assertThat(persisted.getVersion()).isEqualTo(initialVersion + 1);
             return null;
         });
     }

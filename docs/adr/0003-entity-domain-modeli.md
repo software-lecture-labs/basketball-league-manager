@@ -1,6 +1,6 @@
 ---
 title: ADR-0003-Entity'lerin Domain Nesnesi Olarak Kullanılması ve Durum Makineleri
-status: Önerildi
+status: Kabul Edildi
 date: 2026-11-24
 author: Ömer Ünlü
 deciders: Ömer Ünlü, Osman Balcı, Mustafa Budak
@@ -89,8 +89,8 @@ izin verilen değerleri sınırlar. Bu, V1'deki `players.position` sütunuyla ay
 Bu tercih Bölüm 04'teki "aggregate'ler arası referans kimlikle kurulur" ilkesini izler. [1] `Player → Team`
 bağlantısı mevcut koddaki gibi nesne referansı olarak kalır, çünkü oyuncu takımının kadrosunun parçasıdır.
 
-Maç, canlı skor girişinde eşzamanlı güncellemeleri ayırt etmek için `@Version` sütunu taşır. Strateji
-ADR-0005'te belirlenecek.
+Maç, canlı skor girişinde eşzamanlı güncellemeleri ayırt etmek için `@Version` sütunu taşır. Sürümün nasıl
+kullanılacağı ADR-0004'te belirlenmiştir.
 
 ## Değerlendirilen Alternatifler
 
@@ -125,7 +125,7 @@ ADR-0005'te belirlenecek.
 | Risk                                            | Nasıl ele alınacak?                                                                                            |
 | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | Entity eşlemesinin migration ile ayrışması       | Eşleme PR'larında sütun adları migration ile karşılaştırılır. Testcontainers geldiğinde (Dilim 3) eşleme entegrasyon testiyle doğrulanır. |
-| Bitmiş maçın hatalı skorunu düzeltme ihtiyacı   | Tabloda `FINISHED → LIVE` yoktur. Gerekirse Dilim 3'te ayrı kararla eklenir.                                     |
+| Bitmiş maçın hatalı skorunu düzeltme ihtiyacı   | Tabloda `FINISHED → LIVE` yoktur. ADR-0004 bu geçişi `reopen()` ile ekler.                                       |
 | Aynı anda iki fikstür üretme isteği             | Fikstür üretimi ve takım ekleme sezon satırını kilitleyerek çalışır. Ayrıntı fikstür API'sinin PR'ındadır.        |
 
 ## Doğrulama

@@ -1,6 +1,6 @@
 package com.basketballleague.entity;
 
-import com.basketballleague.domain.InvalidGameException;
+import com.basketballleague.domain.InvalidPlayerPointsException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.util.Objects;
@@ -33,14 +33,14 @@ public class PlayerPoints {
 
     private static long requirePositive(long value, String label) {
         if (value <= 0) {
-            throw new InvalidGameException(label + " must be positive, was " + value);
+            throw new InvalidPlayerPointsException(label + " must be positive, was " + value);
         }
         return value;
     }
 
     private static int requireNonNegative(int points) {
         if (points < 0) {
-            throw new InvalidGameException("Player points must not be negative, was " + points);
+            throw new InvalidPlayerPointsException("Player points must not be negative, was " + points);
         }
         return points;
     }

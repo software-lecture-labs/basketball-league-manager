@@ -39,7 +39,10 @@ final class ProblemCatalog {
             case OVERTIME_REQUIRED ->
                     "Berabere biten maç tamamlanamaz; eşitlik bozulana kadar uzatma çeyreği girilmelidir.";
             case PLAYER_NOT_IN_GAME -> "Oyuncu bu maçta oynayan takımlardan birinin kadrosunda değil.";
-            case SCORE_MISMATCH -> "Oyuncu sayılarının takım bazındaki toplamı maç skoruyla uyuşmuyor.";
+            case SCORE_MISMATCH -> "Çeyrek toplamları veya oyuncu sayıları maç skoruyla uyuşmuyor.";
+            case INVALID_PLAYER_POINTS ->
+                    "Her oyuncu sayısı kaydında oyuncu ve takım zorunludur, sayı negatif olamaz ve bir oyuncu "
+                            + "listede yalnızca bir kez yer alır.";
             case CONCURRENT_UPDATE ->
                     "Maç sizden önce başka bir işlem tarafından güncellendi; sayfayı yenileyip tekrar deneyin.";
         };

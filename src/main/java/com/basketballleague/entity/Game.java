@@ -4,6 +4,7 @@ import com.basketballleague.domain.ConcurrentUpdateException;
 import com.basketballleague.domain.GameStatus;
 import com.basketballleague.domain.InvalidGameException;
 import com.basketballleague.domain.InvalidGameStatusTransitionException;
+import com.basketballleague.domain.InvalidPlayerPointsException;
 import com.basketballleague.domain.InvalidQuarterScoreException;
 import com.basketballleague.domain.OvertimeRequiredException;
 import com.basketballleague.domain.PlayerNotInGameException;
@@ -246,18 +247,18 @@ public class Game {
 
     private void validatePlayerPoints(List<PlayerPoints> stats) {
         if (stats == null) {
-            throw new InvalidGameException("Player points list must not be null");
+            throw new InvalidPlayerPointsException("Player points list must not be null");
         }
         final Set<Long> seenPlayers = new HashSet<>();
         for (PlayerPoints entry : stats) {
             if (entry == null) {
-                throw new InvalidGameException("Player points entry must not be null");
+                throw new InvalidPlayerPointsException("Player points entry must not be null");
             }
             if (!isParticipantTeam(entry.getTeamId())) {
                 throw new PlayerNotInGameException(entry.getPlayerId(), id, entry.getTeamId());
             }
             if (!seenPlayers.add(entry.getPlayerId())) {
-                throw new InvalidGameException("Duplicate stats for player " + entry.getPlayerId());
+                throw new InvalidPlayerPointsException("Duplicate stats for player " + entry.getPlayerId());
             }
         }
     }
@@ -270,17 +271,15 @@ public class Game {
         if (homeScore == null || awayScore == null || homeScore.equals(awayScore)) {
             throw new ScoreMismatchException("Game " + id + " does not have valid finished scores");
         }
-        if (!quarterScores.isEmpty()) {
-            if (quarterScores.size() < REGULATION_QUARTERS) {
-                throw new InvalidQuarterScoreException(
-                        "Game " + id + " has fewer than " + REGULATION_QUARTERS + " quarters");
-            }
-            final ScoreTotals quarterTotals = sumQuarters(quarterScores);
-            if (quarterTotals.home() != homeScore || quarterTotals.away() != awayScore) {
-                throw new ScoreMismatchException(
-                        "Game " + id + " quarter totals (" + quarterTotals.home() + "-" + quarterTotals.away()
-                                + ") do not match stored scores (" + homeScore + "-" + awayScore + ")");
-            }
+        if (quarterScores.size() < REGULATION_QUARTERS) {
+            throw new InvalidQuarterScoreException(
+                    "Game " + id + " has fewer than " + REGULATION_QUARTERS + " quarters");
+        }
+        final ScoreTotals quarterTotals = sumQuarters(quarterScores);
+        if (quarterTotals.home() != homeScore || quarterTotals.away() != awayScore) {
+            throw new ScoreMismatchException(
+                    "Game " + id + " quarter totals (" + quarterTotals.home() + "-" + quarterTotals.away()
+                            + ") do not match stored scores (" + homeScore + "-" + awayScore + ")");
         }
         final ScoreTotals playerTotals = sumPlayerPoints(playerPoints);
         if (playerTotals.home() != homeScore || playerTotals.away() != awayScore) {

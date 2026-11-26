@@ -1,5 +1,6 @@
 package com.basketballleague.entity;
 
+import static com.basketballleague.support.EntityFields.withField;
 import static com.basketballleague.support.EntityIds.withId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -9,11 +10,11 @@ import com.basketballleague.domain.ErrorCode;
 import com.basketballleague.domain.GameStatus;
 import com.basketballleague.domain.InvalidGameException;
 import com.basketballleague.domain.InvalidGameStatusTransitionException;
+import com.basketballleague.domain.InvalidPlayerPointsException;
 import com.basketballleague.domain.InvalidQuarterScoreException;
 import com.basketballleague.domain.OvertimeRequiredException;
 import com.basketballleague.domain.PlayerNotInGameException;
 import com.basketballleague.domain.ScoreMismatchException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -67,14 +68,7 @@ class GameTest {
     }
 
     private static Game withVersion(Game game, long version) {
-        try {
-            final Field field = Game.class.getDeclaredField("version");
-            field.setAccessible(true);
-            field.set(game, version);
-            return game;
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException(e);
-        }
+        return withField(game, "version", version);
     }
 
     @Test
@@ -466,16 +460,16 @@ class GameTest {
         withNull.add(null);
 
         assertThatThrownBy(() -> game.recordPlayerPoints(null))
-                .isInstanceOf(InvalidGameException.class);
+                .isInstanceOf(InvalidPlayerPointsException.class);
         assertThatThrownBy(() -> game.recordPlayerPoints(withNull))
-                .isInstanceOf(InvalidGameException.class);
+                .isInstanceOf(InvalidPlayerPointsException.class);
         assertThatThrownBy(() -> game.recordPlayerPoints(List.of(new PlayerPoints(301L, OTHER_TEAM, 15))))
                 .isInstanceOf(PlayerNotInGameException.class)
                 .extracting("code").isEqualTo(ErrorCode.PLAYER_NOT_IN_GAME);
         assertThatThrownBy(() -> game.recordPlayerPoints(List.of(
                 new PlayerPoints(101L, HOME, 10),
                 new PlayerPoints(101L, HOME, 20))))
-                .isInstanceOf(InvalidGameException.class);
+                .isInstanceOf(InvalidPlayerPointsException.class);
 
         assertThat(game.getPlayerPoints()).containsExactly(existing);
     }
@@ -527,6 +521,18 @@ class GameTest {
         game.confirm(0L);
 
         assertThat(game.getStatus()).isEqualTo(GameStatus.CONFIRMED);
+    }
+
+    @Test
+    void confirmRejectsFinishedGameWhoseQuarterScoresAreMissing() {
+        final Game game = finishedGame();
+        game.recordPlayerPoints(matchingPlayerPoints());
+        withField(game, "quarterScores", new ArrayList<QuarterScore>());
+
+        assertThatThrownBy(() -> game.confirm(0L))
+                .isInstanceOf(InvalidQuarterScoreException.class)
+                .extracting("code").isEqualTo(ErrorCode.INVALID_QUARTER_SCORE);
+        assertThat(game.getStatus()).isEqualTo(GameStatus.FINISHED);
     }
 
     @Test

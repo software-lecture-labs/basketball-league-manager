@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.basketballleague.domain.ErrorCode;
-import com.basketballleague.domain.InvalidGameException;
+import com.basketballleague.domain.InvalidPlayerPointsException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -27,16 +27,16 @@ class PlayerPointsTest {
     @CsvSource({"0, 10", "-1, 10", "-9223372036854775808, 10", "5, 0", "5, -1", "5, -9223372036854775808"})
     void rejectsNonPositiveIdentifiers(long playerId, long teamId) {
         assertThatThrownBy(() -> new PlayerPoints(playerId, teamId, 10))
-                .isInstanceOf(InvalidGameException.class)
-                .extracting("code").isEqualTo(ErrorCode.INVALID_GAME);
+                .isInstanceOf(InvalidPlayerPointsException.class)
+                .extracting("code").isEqualTo(ErrorCode.INVALID_PLAYER_POINTS);
     }
 
     @ParameterizedTest
     @ValueSource(ints = {-1, Integer.MIN_VALUE})
     void rejectsNegativePoints(int points) {
         assertThatThrownBy(() -> new PlayerPoints(5L, 10L, points))
-                .isInstanceOf(InvalidGameException.class)
-                .extracting("code").isEqualTo(ErrorCode.INVALID_GAME);
+                .isInstanceOf(InvalidPlayerPointsException.class)
+                .extracting("code").isEqualTo(ErrorCode.INVALID_PLAYER_POINTS);
     }
 
     @Test

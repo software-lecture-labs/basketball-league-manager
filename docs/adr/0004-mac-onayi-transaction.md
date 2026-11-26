@@ -1,6 +1,6 @@
 ---
 title: ADR-0004-Maç Sonucu, Onay Transaction'ı ve Eşzamanlı Değişiklikler
-status: Önerildi
+status: Kabul Edildi
 date: 2026-11-25
 author: Ömer Ünlü
 deciders: Ömer Ünlü, Osman Balcı, Mustafa Budak

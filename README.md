@@ -168,7 +168,9 @@ Oklar izin verilen bağımlılıkları gösterir; ters yöndeki her erişim mima
 ### Transaction örneği: maç onayı
 
 Maç onayı tek bir `@Transactional` servis metodudur. Herhangi bir adım başarısız olursa değişikliklerin
-hepsi geri alınır; maç `FINISHED` kalır ve puan durumu bu maçı saymaz.
+hepsi geri alınır; maç `FINISHED` kalır ve puan durumu bu maçı saymaz. İstek, yöneticinin son gördüğü maç
+sürümünü taşır; maç o arada değiştiyse onay 409 ile reddedilir (ADR-0004). Bu davranışlar
+[GameServiceIT](src/test/java/com/basketballleague/integration/GameServiceIT.java) ile gerçek PostgreSQL'de sınanır.
 
 ```mermaid
 sequenceDiagram
@@ -177,16 +179,16 @@ sequenceDiagram
     participant S as GameService
     participant G as Game
     participant DB as PostgreSQL
-    Y->>R: Onay isteği
-    R->>S: confirm(gameId)
+    Y->>R: Onay isteği (version)
+    R->>S: confirm(gameId, version)
     Note over S,DB: Transaction başlar
     S->>DB: Maç, çeyrek skorları, oyuncu sayıları (tek seferde)
-    S->>G: confirm(...)
+    S->>G: confirm(version)
     alt Skorlar tutarlı ve maç FINISHED
         G-->>S: Durum CONFIRMED
-        S->>DB: Commit
+        S->>DB: Sürüm artışı ve commit
         R-->>Y: Başarılı yanıt
-    else Skor uyuşmazlığı veya yanlış durum
+    else Bayat sürüm, skor uyuşmazlığı veya yanlış durum
         G-->>S: DomainException
         S->>DB: Rollback
         R-->>Y: 409 Problem Details

@@ -353,9 +353,9 @@ değişiklik `version`'ı artırır ve güncel maçı döner.
 | 400 | `VALIDATION_FAILED` | `version` yok veya negatif |
 | 404 | `GAME_NOT_FOUND` | maç yok |
 | 409 | `INVALID_GAME_STATUS_TRANSITION` | geçiş tablodaki durumdan yapılmıyor (ör. `SCHEDULED` maçı onaylamak) |
-| 409 | `INVALID_QUARTER_SCORE` | `finish`: 4'ten az çeyrek var |
+| 409 | `INVALID_QUARTER_SCORE` | `finish` veya `confirm`: 4'ten az çeyrek var |
 | 409 | `OVERTIME_REQUIRED` | `finish`: skor eşit; uzatma çeyreği girilmeli |
-| 409 | `SCORE_MISMATCH` | `confirm`: bir takımın oyuncu sayıları toplamı takım skoruna eşit değil |
+| 409 | `SCORE_MISMATCH` | `confirm`: çeyrek toplamları veya bir takımın oyuncu sayıları toplamı skora eşit değil |
 | 409 | `CONCURRENT_UPDATE` | `version` güncel değil veya aynı anda başka bir değişiklik kaydedildi |
 
 ### `PUT /games/{id}/quarters`
@@ -413,6 +413,9 @@ sunucuda belirlenir.
 | 409 | `INVALID_GAME_STATUS_TRANSITION` | maç `LIVE` veya `FINISHED` değil |
 | 409 | `PLAYER_NOT_IN_GAME` | oyuncu yok ya da maçın iki takımından birinde değil |
 | 409 | `CONCURRENT_UPDATE` | `version` güncel değil |
+
+Negatif sayı ve tekrarlanan oyuncu önce istek doğrulamasında 400 döner. Aynı kurallar `Game` içinde de denetlenir
+(409 `INVALID_PLAYER_POINTS`, ADR-0004); bu kod yalnızca doğrulamayı atlayan bir çağrıda görülür.
 
 ## Puan durumu
 

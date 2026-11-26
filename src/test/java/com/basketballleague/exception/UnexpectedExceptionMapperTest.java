@@ -3,6 +3,7 @@ package com.basketballleague.exception;
 import static com.basketballleague.exception.ProblemResponseAssertions.assertProblem;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.basketballleague.domain.ErrorCode;
 import com.basketballleague.dto.ProblemDetails;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.persistence.PersistenceException;
@@ -33,6 +34,15 @@ class UnexpectedExceptionMapperTest {
 
         final ProblemDetails body = assertProblem(response, Response.Status.CONFLICT, "CONCURRENT_UPDATE");
         assertThat(body.detail()).doesNotContain("Game 7");
+    }
+
+    @Test
+    void commitTimeConflictUsesTheSameTextAsTheVersionCheck() {
+        final Response response = mapper.toResponse(
+                new RuntimeException("commit failed", new OptimisticLockException("Game 7 was changed")));
+
+        final ProblemDetails body = assertProblem(response, Response.Status.CONFLICT, "CONCURRENT_UPDATE");
+        assertThat(body.detail()).isEqualTo(ProblemCatalog.detailFor(ErrorCode.CONCURRENT_UPDATE));
     }
 
     @Test

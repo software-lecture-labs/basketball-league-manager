@@ -362,6 +362,12 @@ Betik tekrar çalıştırılabilir: var olan sezonu kullanır, üretilmiş fikst
 `http://localhost:8080/basketball-league/fixtures.html` adresinde görünür. Sayfayı VS Code "Go Live" ile değil,
 Payara üzerinden açın; API yalnızca Payara'da çalışır.
 
+Takım, oyuncu ve sezon yönetim formları `http://localhost:8080/basketball-league/admin.html` adresindedir.
+
+> [!WARNING]
+> Yönetici sayfasında giriş/kimlik doğrulaması yoktur; korumasızdır. Yalnızca yerel demo ortamında kullanın,
+> internete açık üretim ortamında yayınlamayın.
+
 > [!NOTE]
 > Windows "running scripts is disabled" derse betiği bu oturum için izin vererek çalıştırın:
 > `powershell -ExecutionPolicy Bypass -File .\scripts\demo-sezon.ps1`

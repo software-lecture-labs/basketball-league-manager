@@ -8,6 +8,7 @@
     var API_TEAMS = 'api/teams';
     var API_SEASONS = 'api/seasons';
     var PAGE_SIZE = 100;
+    var MAX_SEASON_TEAMS = 20;
 
     var state = {
         teams: [],
@@ -140,7 +141,7 @@
         });
         var canAddTeam = Boolean(selectedSeason && selectedSeason.status === 'DRAFT'
             && !state.seasonTeamsLoading && el.seasonTeamForm.dataset.submitting !== 'true'
-            && state.teams.length > 0 && state.seasonTeams.length < 20);
+            && state.teams.length > 0 && state.seasonTeams.length < MAX_SEASON_TEAMS);
         el.seasonTeamSelect.disabled = !canAddTeam;
         el.seasonTeamSubmit.disabled = !canAddTeam;
 
@@ -157,7 +158,7 @@
             item.textContent = team.name;
             el.seasonTeamList.appendChild(item);
         });
-        el.seasonTeamCount.textContent = '(' + state.seasonTeams.length + '/20)';
+        el.seasonTeamCount.textContent = '(' + state.seasonTeams.length + '/' + MAX_SEASON_TEAMS + ')';
         el.seasonTeamEmpty.hidden = state.seasonTeams.length > 0;
         el.seasonTeamList.hidden = state.seasonTeams.length === 0;
         renderSeasonTeamOptions();

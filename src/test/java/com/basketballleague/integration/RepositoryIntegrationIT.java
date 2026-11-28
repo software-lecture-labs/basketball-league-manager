@@ -162,7 +162,8 @@ class RepositoryIntegrationIT extends PostgresIntegrationSupport {
             final Game scheduled = new Game(target.getId(), 1, teamIds.get(0), teamIds.get(1));
             final Game confirmedTarget = new Game(target.getId(), 1, teamIds.get(2), teamIds.get(3));
             final Game roundTwo = new Game(target.getId(), 2, teamIds.get(1), teamIds.get(0));
-            final Game confirmedMiddle = new Game(target.getId(), 2, teamIds.get(2), teamIds.get(0));
+            // Round 2 already has teams 0 and 1; a team plays once per round (uq_games_season_round_*).
+            final Game confirmedMiddle = new Game(target.getId(), 2, teamIds.get(3), teamIds.get(2));
             final Game confirmedLatest = new Game(target.getId(), 3, teamIds.get(2), teamIds.get(1));
             final Game confirmedOther = new Game(other.getId(), 1, teamIds.get(0), teamIds.get(1));
 

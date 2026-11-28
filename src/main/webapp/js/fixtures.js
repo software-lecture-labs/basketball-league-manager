@@ -9,6 +9,7 @@
 
     var API_SEASONS = 'api/seasons';
     var API_TEAMS = 'api/teams';
+    var PLAYER_PAGE_SIZE = 100; // API'nin izin verdiği en büyük sayfa boyutu
 
     var STATUS_LABELS = {
         SCHEDULED: 'Oynanmadı',
@@ -23,7 +24,8 @@
         showAllRounds: false,
         filter: 'ALL', // 'ALL' | 'SCHEDULED' | 'FINISHED'
         season: null,
-        isDemo: false
+        isDemo: false,
+        detailRequest: 0 // en son açılan maç detayı isteğinin sırası
     };
 
     var el = {
@@ -56,11 +58,13 @@
     }
 
     function getTeamPlayers(teamId, page, players) {
-        return getJson(API_TEAMS + '/' + teamId + '/players?page=' + page + '&size=100')
+        return getJson(API_TEAMS + '/' + teamId + '/players?page=' + page + '&size=' + PLAYER_PAGE_SIZE)
             .then(function (response) {
                 var items = response.items || response;
                 var allPlayers = players.concat(items);
-                if (response.totalItems !== undefined && allPlayers.length < response.totalItems) {
+                // Boş sayfa gelirse dur: kadro istekler arasında küçülürse sonsuz döngüye girmesin.
+                if (items.length > 0 && response.totalItems !== undefined
+                        && allPlayers.length < response.totalItems) {
                     return getTeamPlayers(teamId, page + 1, allPlayers);
                 }
                 return allPlayers;
@@ -425,6 +429,12 @@
     }
 
     function showGameDetails(gameId) {
+        // Önceki maçın geç gelen yanıtı yeni açılan maçın üzerine yazılmasın.
+        var request = ++state.detailRequest;
+        function isCurrent() {
+            return request === state.detailRequest;
+        }
+
         el.gameDetailDialog.showModal();
         el.gameDetailContent.replaceChildren();
         appendText(el.gameDetailContent, 'p', 'game-detail-empty', 'Maç bilgileri yükleniyor...');
@@ -438,8 +448,11 @@
                     return { game: game, homePlayers: rosters[0], awayPlayers: rosters[1] };
                 });
             })
-            .then(renderGameDetail)
+            .then(function (result) {
+                if (isCurrent()) renderGameDetail(result);
+            })
             .catch(function (error) {
+                if (!isCurrent()) return;
                 el.gameDetailContent.replaceChildren();
                 appendText(el.gameDetailContent, 'p', 'result-entry-error',
                     'Maç bilgisi alınamadı: ' + error.message);
@@ -583,8 +596,13 @@
         el.gameDetailClose.addEventListener('click', function () {
             el.gameDetailDialog.close();
         });
+        // Yalnızca pencerenin dışına (arka plana) tıklanınca kapat. event.target tek başına yetmez:
+        // pencerenin iç boşluğuna (padding) tıklamak da hedef olarak dialog'un kendisini verir.
         el.gameDetailDialog.addEventListener('click', function (event) {
-            if (event.target === el.gameDetailDialog) el.gameDetailDialog.close();
+            var box = el.gameDetailDialog.getBoundingClientRect();
+            var outside = event.clientX < box.left || event.clientX > box.right
+                || event.clientY < box.top || event.clientY > box.bottom;
+            if (event.target === el.gameDetailDialog && outside) el.gameDetailDialog.close();
         });
 
         el.prevRoundBtn.addEventListener('click', function () {

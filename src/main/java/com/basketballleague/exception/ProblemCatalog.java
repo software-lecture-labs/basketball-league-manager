@@ -23,6 +23,7 @@ final class ProblemCatalog {
             case INVALID_PLAYER ->
                     "Oyuncunun adı, soyadı, takımı ve pozisyonu zorunludur; forma numarası 0-99 arasında olmalıdır.";
             case TEAM_NOT_FOUND -> "İstenen takım bulunamadı.";
+            case TEAM_NOT_IN_SEASON -> "Bu takım seçilen sezonda yer almıyor.";
             case TEAM_NAME_TAKEN -> "Bu adda bir takım zaten var.";
             case JERSEY_NUMBER_TAKEN -> "Bu forma numarası takımda başka bir oyuncu tarafından kullanılıyor.";
             case INVALID_GAME_STATUS_TRANSITION -> "Maç mevcut durumundan istenen duruma geçirilemez.";

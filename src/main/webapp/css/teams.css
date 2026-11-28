@@ -306,6 +306,145 @@ h2 {
     cursor: pointer;
 }
 
+/* Sezon özeti */
+.season-card {
+    margin-top: 1.75rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--line-strong);
+}
+
+.season-card-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.section-eyebrow {
+    margin: 0 0 0.25rem;
+    color: var(--ink-soft);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.season-card h3 {
+    margin: 0;
+    font: 800 1.8rem/1 var(--display);
+}
+
+.season-picker {
+    display: grid;
+    gap: 0.25rem;
+    min-width: min(13rem, 45%);
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.season-picker select {
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.45rem 0.6rem;
+    color: var(--ink);
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font: inherit;
+}
+
+.season-picker select:disabled {
+    color: var(--ink-soft);
+    background: var(--paper);
+}
+
+.season-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.season-stats > div {
+    min-width: 0;
+    padding: 0.65rem 0.75rem;
+    background: var(--paper);
+    border: 1px solid var(--line);
+}
+
+.season-stats dt {
+    color: var(--ink-soft);
+    font-size: 0.75rem;
+}
+
+.season-stats dd {
+    margin: 0.15rem 0 0;
+    font: 800 1.6rem/1 var(--display);
+    font-variant-numeric: tabular-nums;
+}
+
+.recent-games-section {
+    margin-top: 1.25rem;
+}
+
+.recent-games-section h4 {
+    margin: 0 0 0.55rem;
+    font-size: 0.95rem;
+}
+
+.recent-games {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.recent-game {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem 0.65rem;
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--line-strong);
+    font-size: 0.875rem;
+}
+
+.recent-game.won {
+    border-left-color: #1e663a;
+}
+
+.recent-game.lost {
+    border-left-color: #a3211b;
+}
+
+.recent-game-round,
+.recent-game-venue {
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+}
+
+.recent-game-opponent {
+    min-width: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.recent-game-score {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.recent-game-result {
+    min-width: 1.5rem;
+    font-weight: 800;
+    text-align: center;
+}
+
 .footnote {
     padding: 1.25rem var(--gutter);
     border-top: 1px solid var(--line);
@@ -329,6 +468,38 @@ h2 {
 
     .jersey {
         font-size: 2.25rem;
+    }
+
+    .season-stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .recent-game {
+        grid-template-columns: 3.75rem minmax(0, 1fr) auto auto;
+        gap: 0.45rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .season-card-head {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .season-picker {
+        min-width: 0;
+    }
+
+    .season-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .recent-game {
+        grid-template-columns: 3.2rem minmax(0, 1fr) auto;
+    }
+
+    .recent-game-venue {
+        display: none;
     }
 }
 

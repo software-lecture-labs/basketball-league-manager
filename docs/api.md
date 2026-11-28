@@ -53,6 +53,49 @@ Takımları ada göre sıralı, sayfalı listeler.
 | --- | --- |
 | 404 | `TEAM_NOT_FOUND` |
 
+### `GET /teams/{id}/seasons`
+
+Takımın yer aldığı sezonları başlangıç tarihine göre yeniden eskiye sıralı bir dizi olarak döner.
+
+```json
+[
+  { "id": 1, "name": "2026-27 Sezonu", "startDate": "2026-10-01", "status": "ACTIVE" }
+]
+```
+
+| Durum | `code` |
+| --- | --- |
+| 404 | `TEAM_NOT_FOUND` |
+
+### `GET /teams/{id}/seasons/{seasonId}/overview`
+
+Takımın seçilen sezondaki puan durumu satırını ve en fazla beş son onaylanmış maçını döner. Maçlar hafta numarasına
+göre yeniden eskiye sıralıdır; yalnızca sonucu onaylanmış maçlar dahil edilir.
+
+```json
+{
+  "season": { "id": 1, "name": "2026-27 Sezonu", "startDate": "2026-10-01", "status": "ACTIVE" },
+  "summary": {
+    "rank": 2, "teamId": 7, "teamName": "Anadolu Efes", "played": 5, "won": 3, "lost": 2,
+    "pointsFor": 420, "pointsAgainst": 399, "pointDiff": 21, "leaguePoints": 8
+  },
+  "lastFiveGames": [
+    {
+      "id": 10, "roundNumber": 5,
+      "homeTeam": { "id": 7, "name": "Anadolu Efes", "city": "İstanbul" },
+      "awayTeam": { "id": 9, "name": "Fenerbahçe", "city": "İstanbul" },
+      "homeScore": 84, "awayScore": 80
+    }
+  ]
+}
+```
+
+| Durum | `code` |
+| --- | --- |
+| 404 | `TEAM_NOT_FOUND` |
+| 404 | `SEASON_NOT_FOUND` |
+| 404 | `TEAM_NOT_IN_SEASON` |
+
 ### `POST /teams`
 
 ```json

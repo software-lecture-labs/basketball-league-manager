@@ -69,12 +69,11 @@ public class StandingService {
     }
 
     /**
-     * The only step that needs a game's score. Scores and {@code Game.confirm()} arrive together with result entry
-     * (ADR-0004), so no game can be confirmed before then and this is never reached; result entry replaces the
-     * body with {@code new MatchResult(homeTeamId, awayTeamId, homeScore, awayScore)}.
+     * A confirmed game always has both scores: {@code Game.finish()} writes them and {@code Game.confirm()} checks
+     * them (ADR-0004), so the stored values are read as they are.
      */
     private static MatchResult toResult(Game game) {
-        throw new IllegalStateException("Game " + game.getId() + " is confirmed but has no score mapping yet");
+        return new MatchResult(game.getHomeTeamId(), game.getAwayTeamId(), game.getHomeScore(), game.getAwayScore());
     }
 
     private static StandingResponse toResponse(int rank, TeamStanding standing) {

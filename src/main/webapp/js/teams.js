@@ -20,6 +20,7 @@
     var teams = [];
     var selectedId = null;
     var selectionToken = 0;
+    var seasonSelectionToken = 0;
 
     var el = {
         list: document.getElementById('team-list'),
@@ -35,6 +36,20 @@
         roster: document.getElementById('roster'),
         rosterBody: document.getElementById('roster-body'),
         rosterNotice: document.getElementById('roster-notice'),
+        seasonPanel: document.getElementById('team-season-panel'),
+        seasonSelect: document.getElementById('team-season-select'),
+        seasonNotice: document.getElementById('team-season-notice'),
+        seasonContent: document.getElementById('team-season-content'),
+        seasonRank: document.getElementById('season-rank'),
+        seasonPlayed: document.getElementById('season-played'),
+        seasonWon: document.getElementById('season-won'),
+        seasonLost: document.getElementById('season-lost'),
+        seasonPointDiff: document.getElementById('season-point-diff'),
+        seasonPointsFor: document.getElementById('season-points-for'),
+        seasonPointsAgainst: document.getElementById('season-points-against'),
+        seasonLeaguePoints: document.getElementById('season-league-points'),
+        recentGames: document.getElementById('recent-games'),
+        recentGamesEmpty: document.getElementById('recent-games-empty'),
         rowTemplate: document.getElementById('team-row')
     };
 
@@ -164,6 +179,127 @@
         }
     }
 
+    function renderSeasonOverview(overview) {
+        var summary = overview.summary;
+        el.seasonRank.textContent = summary.rank + '.';
+        el.seasonPlayed.textContent = summary.played;
+        el.seasonWon.textContent = summary.won;
+        el.seasonLost.textContent = summary.lost;
+        el.seasonPointDiff.textContent = summary.pointDiff;
+        el.seasonPointsFor.textContent = summary.pointsFor;
+        el.seasonPointsAgainst.textContent = summary.pointsAgainst;
+        el.seasonLeaguePoints.textContent = summary.leaguePoints;
+        el.recentGames.replaceChildren();
+
+        overview.lastFiveGames.forEach(function (game) {
+            var isHome = game.homeTeam.id === selectedId;
+            var teamScore = isHome ? game.homeScore : game.awayScore;
+            var opponentScore = isHome ? game.awayScore : game.homeScore;
+            var won = teamScore > opponentScore;
+            var item = document.createElement('li');
+            item.className = 'recent-game ' + (won ? 'won' : 'lost');
+
+            var round = document.createElement('span');
+            round.className = 'recent-game-round';
+            round.textContent = game.roundNumber + '. hafta';
+
+            var opponent = document.createElement('span');
+            opponent.className = 'recent-game-opponent';
+            opponent.textContent = isHome ? game.awayTeam.name : game.homeTeam.name;
+
+            var venue = document.createElement('span');
+            venue.className = 'recent-game-venue';
+            venue.textContent = isHome ? 'İç saha' : 'Deplasman';
+
+            var score = document.createElement('span');
+            score.className = 'recent-game-score';
+            score.textContent = teamScore + ' - ' + opponentScore;
+
+            var result = document.createElement('span');
+            result.className = 'recent-game-result';
+            result.textContent = won ? 'G' : 'M';
+            result.setAttribute('aria-label', won ? 'Galibiyet' : 'Mağlubiyet');
+
+            item.append(round, opponent, venue, score, result);
+            el.recentGames.appendChild(item);
+        });
+
+        el.recentGames.hidden = overview.lastFiveGames.length === 0;
+        el.recentGamesEmpty.hidden = overview.lastFiveGames.length > 0;
+        el.seasonNotice.hidden = true;
+        el.seasonContent.hidden = false;
+    }
+
+    function loadSeasonOverview(teamId, seasonId, teamToken) {
+        var requestToken = ++seasonSelectionToken;
+        el.seasonContent.hidden = true;
+        el.seasonNotice.hidden = true;
+
+        getJson(API + '/' + teamId + '/seasons/' + seasonId + '/overview')
+            .then(function (overview) {
+                if (teamToken === selectionToken && requestToken === seasonSelectionToken) {
+                    renderSeasonOverview(overview);
+                }
+            })
+            .catch(function (error) {
+                if (teamToken === selectionToken && requestToken === seasonSelectionToken) {
+                    showNotice(el.seasonNotice, 'Sezon özeti yüklenemedi. ' + error.message, function () {
+                        loadSeasonOverview(teamId, seasonId, teamToken);
+                    });
+                }
+            });
+    }
+
+    function loadTeamSeasons(teamId, teamToken) {
+        el.seasonPanel.hidden = false;
+        el.seasonContent.hidden = true;
+        el.seasonNotice.hidden = true;
+        el.seasonSelect.disabled = true;
+        el.seasonSelect.replaceChildren();
+        var loading = document.createElement('option');
+        loading.value = '';
+        loading.textContent = 'Sezonlar yükleniyor...';
+        loading.disabled = true;
+        el.seasonSelect.appendChild(loading);
+
+        getJson(API + '/' + teamId + '/seasons')
+            .then(function (seasons) {
+                if (teamToken !== selectionToken) {
+                    return;
+                }
+                el.seasonSelect.replaceChildren();
+                if (seasons.length === 0) {
+                    var empty = document.createElement('option');
+                    empty.value = '';
+                    empty.textContent = 'Sezon bulunamadı';
+                    empty.disabled = true;
+                    el.seasonSelect.appendChild(empty);
+                    showNotice(el.seasonNotice, 'Bu takım henüz bir sezona eklenmemiş.');
+                    return;
+                }
+
+                seasons.forEach(function (season) {
+                    var option = document.createElement('option');
+                    option.value = season.id;
+                    option.textContent = season.name;
+                    el.seasonSelect.appendChild(option);
+                });
+                el.seasonSelect.disabled = false;
+
+                var defaultSeason = seasons.find(function (season) { return season.status === 'ACTIVE'; })
+                    || seasons[0];
+                el.seasonSelect.value = String(defaultSeason.id);
+                loadSeasonOverview(teamId, defaultSeason.id, teamToken);
+            })
+            .catch(function (error) {
+                if (teamToken === selectionToken) {
+                    showNotice(el.seasonNotice, 'Sezonlar yüklenemedi. ' + error.message, function () {
+                        loadTeamSeasons(teamId, teamToken);
+                    });
+                }
+            });
+    }
+
     function selectTeam(teamId, moveFocus) {
         var team = teams.find(function (candidate) { return candidate.id === teamId; });
         if (!team) {
@@ -171,6 +307,7 @@
         }
         selectedId = teamId;
         var token = ++selectionToken;
+        seasonSelectionToken++;
         history.replaceState(null, '', HASH_PREFIX + teamId);
         renderList();
 
@@ -182,6 +319,9 @@
         el.roster.hidden = true;
         el.rosterNotice.hidden = true;
         el.rosterBody.replaceChildren();
+        el.seasonPanel.hidden = true;
+        el.seasonContent.hidden = true;
+        el.seasonNotice.hidden = true;
 
         if (moveFocus && window.matchMedia('(max-width: 760px)').matches) {
             el.sheet.focus();
@@ -201,6 +341,8 @@
                     });
                 }
             });
+
+        loadTeamSeasons(teamId, token);
     }
 
     function teamIdFromHash() {
@@ -234,6 +376,11 @@
         var button = event.target.closest('button[data-team-id]');
         if (button) {
             selectTeam(Number(button.dataset.teamId), true);
+        }
+    });
+    el.seasonSelect.addEventListener('change', function () {
+        if (selectedId && el.seasonSelect.value) {
+            loadSeasonOverview(selectedId, Number(el.seasonSelect.value), selectionToken);
         }
     });
 

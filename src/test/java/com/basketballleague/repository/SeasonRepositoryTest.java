@@ -120,4 +120,14 @@ class SeasonRepositoryTest {
 
         assertThat(repository.findTeamIds(3L)).containsExactly(1L, 4L);
     }
+
+    @Test
+    void findByTeamIdReturnsSeasonsContainingTheTeam() {
+        final List<Season> seasons = List.of(season());
+        when(em.createQuery(anyString(), eq(Season.class))).thenReturn(seasonQuery);
+        when(seasonQuery.setParameter("teamId", 4L)).thenReturn(seasonQuery);
+        when(seasonQuery.getResultList()).thenReturn(seasons);
+
+        assertThat(repository.findByTeamId(4L)).isEqualTo(seasons);
+    }
 }

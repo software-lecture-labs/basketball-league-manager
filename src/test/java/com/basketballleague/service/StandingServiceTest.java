@@ -114,4 +114,30 @@ class StandingServiceTest {
 
         assertThat(service().calculateStandings(SEASON_ID)).isEmpty();
     }
+
+    @Test
+    void confirmedGameScoresAreIncludedInStandings() {
+        givenSeasonWithTeams(team(1L, "Anadolu Efes"), team(2L, "Fenerbahçe"));
+        when(gameRepository.findConfirmedBySeasonId(SEASON_ID)).thenReturn(List.of(confirmedGame()));
+
+        assertThat(service().calculateStandings(SEASON_ID)).containsExactly(
+                new StandingResponse(1, 1L, "Anadolu Efes", 1, 1, 0, 80, 75, 5, 2),
+                new StandingResponse(2, 2L, "Fenerbahçe", 1, 0, 1, 75, 80, -5, 1));
+    }
+
+    private static Game confirmedGame() {
+        final Game game = new Game(SEASON_ID, 1, 1L, 2L);
+        game.start();
+        game.recordQuarters(List.of(
+                new QuarterScore(1, 20, 18),
+                new QuarterScore(2, 19, 17),
+                new QuarterScore(3, 21, 20),
+                new QuarterScore(4, 20, 20)));
+        game.finish();
+        game.recordPlayerPoints(List.of(
+                new PlayerPoints(10L, 1L, 80),
+                new PlayerPoints(20L, 2L, 75)));
+        game.confirm(0L);
+        return game;
+    }
 }

@@ -628,8 +628,12 @@
 
         el.filterButtons.forEach(function (btn) {
             btn.addEventListener('click', function () {
-                el.filterButtons.forEach(function (b) { b.classList.remove('active'); });
+                el.filterButtons.forEach(function (b) {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-pressed', 'false');
+                });
                 btn.classList.add('active');
+                btn.setAttribute('aria-pressed', 'true');
                 state.filter = btn.dataset.filter;
                 render();
             });

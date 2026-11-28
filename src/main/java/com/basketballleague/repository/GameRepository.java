@@ -76,4 +76,18 @@ public class GameRepository {
                 .setParameter("seasonId", seasonId)
                 .getResultList();
     }
+
+    /**
+     * The team's latest confirmed games in a season, newest round first.
+     */
+    public List<Game> findRecentConfirmedBySeasonAndTeamId(long seasonId, long teamId, int limit) {
+        return em.createQuery("SELECT g FROM Game g WHERE g.seasonId = :seasonId"
+                        + " AND g.status = com.basketballleague.domain.GameStatus.CONFIRMED"
+                        + " AND (g.homeTeamId = :teamId OR g.awayTeamId = :teamId)"
+                        + " ORDER BY g.roundNumber DESC, g.id DESC", Game.class)
+                .setParameter("seasonId", seasonId)
+                .setParameter("teamId", teamId)
+                .setMaxResults(limit)
+                .getResultList();
+    }
 }

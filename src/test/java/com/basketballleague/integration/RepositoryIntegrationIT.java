@@ -141,6 +141,10 @@ class RepositoryIntegrationIT extends PostgresIntegrationSupport {
                     .containsExactly("2026-27 Güncel", "2025-26 Arşiv");
             assertThat(seasons.findTeamIds(newerSeasonId))
                     .containsExactlyInAnyOrderElementsOf(teamIds);
+            assertThat(seasons.findByTeamId(teamIds.get(0))).extracting(Season::getName)
+                    .containsExactly("2026-27 Güncel", "2025-26 Arşiv");
+            assertThat(seasons.findByTeamId(teamIds.get(2))).extracting(Season::getName)
+                    .containsExactly("2026-27 Güncel");
             return null;
         });
     }
@@ -158,22 +162,29 @@ class RepositoryIntegrationIT extends PostgresIntegrationSupport {
             final Game scheduled = new Game(target.getId(), 1, teamIds.get(0), teamIds.get(1));
             final Game confirmedTarget = new Game(target.getId(), 1, teamIds.get(2), teamIds.get(3));
             final Game roundTwo = new Game(target.getId(), 2, teamIds.get(1), teamIds.get(0));
+            // Round 2 already has teams 0 and 1; a team plays once per round (uq_games_season_round_*).
+            final Game confirmedMiddle = new Game(target.getId(), 2, teamIds.get(3), teamIds.get(2));
+            final Game confirmedLatest = new Game(target.getId(), 3, teamIds.get(2), teamIds.get(1));
             final Game confirmedOther = new Game(other.getId(), 1, teamIds.get(0), teamIds.get(1));
 
-            new GameRepository(em).saveAll(List.of(roundTwo, scheduled, confirmedTarget, confirmedOther));
+            new GameRepository(em).saveAll(
+                    List.of(roundTwo, scheduled, confirmedTarget, confirmedMiddle, confirmedLatest, confirmedOther));
 
             em.createNativeQuery(
                             "UPDATE games SET status = 'CONFIRMED', home_score = 88, away_score = 81 "
-                                    + "WHERE id IN (?1, ?2)")
+                                    + "WHERE id IN (?1, ?2, ?3, ?4)")
                     .setParameter(1, confirmedTarget.getId())
-                    .setParameter(2, confirmedOther.getId())
+                    .setParameter(2, confirmedMiddle.getId())
+                    .setParameter(3, confirmedLatest.getId())
+                    .setParameter(4, confirmedOther.getId())
                     .executeUpdate();
             em.createNativeQuery(
                             "UPDATE games SET status = 'FINISHED', home_score = 75, away_score = 70 WHERE id = ?1")
                     .setParameter(1, roundTwo.getId())
                     .executeUpdate();
 
-            return new long[]{target.getId(), scheduled.getId(), confirmedTarget.getId(), roundTwo.getId()};
+            return new long[]{target.getId(), scheduled.getId(), confirmedTarget.getId(), roundTwo.getId(),
+                    confirmedMiddle.getId(), confirmedLatest.getId(), teamIds.get(2)};
         });
 
         readOnly(em -> {
@@ -181,14 +192,20 @@ class RepositoryIntegrationIT extends PostgresIntegrationSupport {
             // Ordered by round; the provider may insert same-round games in any order, so ids within
             // round 1 are not compared positionally.
             final List<Game> fixture = games.findBySeasonId(ids[0]);
-            assertThat(fixture).extracting(Game::getRoundNumber).containsExactly(1, 1, 2);
-            assertThat(fixture).extracting(Game::getId).containsExactlyInAnyOrder(ids[1], ids[2], ids[3]);
-            assertThat(fixture.getLast().getId()).isEqualTo(ids[3]);
+            assertThat(fixture).extracting(Game::getRoundNumber).containsExactly(1, 1, 2, 2, 3);
+            assertThat(fixture).extracting(Game::getId)
+                    .containsExactlyInAnyOrder(ids[1], ids[2], ids[3], ids[4], ids[5]);
+            assertThat(fixture.getLast().getId()).isEqualTo(ids[5]);
 
             final List<Game> confirmed = games.findConfirmedBySeasonId(ids[0]);
-            assertThat(confirmed).hasSize(1);
-            assertThat(confirmed.getFirst().getId()).isEqualTo(ids[2]);
-            assertThat(confirmed.getFirst().getStatus()).isEqualTo(GameStatus.CONFIRMED);
+            assertThat(confirmed).hasSize(3)
+                    .extracting(Game::getId)
+                    .containsExactlyInAnyOrder(ids[2], ids[4], ids[5]);
+            assertThat(confirmed).allMatch(game -> game.getStatus() == GameStatus.CONFIRMED);
+
+            assertThat(games.findRecentConfirmedBySeasonAndTeamId(ids[0], ids[6], 2))
+                    .extracting(Game::getId)
+                    .containsExactly(ids[5], ids[4]);
             return null;
         });
     }

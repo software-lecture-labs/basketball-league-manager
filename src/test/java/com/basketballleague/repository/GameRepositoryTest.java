@@ -71,6 +71,18 @@ class GameRepositoryTest {
     }
 
     @Test
+    void findRecentConfirmedBySeasonAndTeamLimitsAndOrdersTheTeamGames() {
+        final List<Game> games = List.of(new Game(5L, 3, 10L, 20L));
+        when(em.createQuery(contains("roundNumber DESC"), eq(Game.class))).thenReturn(gameQuery);
+        when(gameQuery.setParameter("seasonId", 5L)).thenReturn(gameQuery);
+        when(gameQuery.setParameter("teamId", 10L)).thenReturn(gameQuery);
+        when(gameQuery.setMaxResults(5)).thenReturn(gameQuery);
+        when(gameQuery.getResultList()).thenReturn(games);
+
+        assertThat(repository.findRecentConfirmedBySeasonAndTeamId(5L, 10L, 5)).isEqualTo(games);
+    }
+
+    @Test
     void findByIdReturnsEmptyForAnUnknownGame() {
         when(em.find(Game.class, 99L)).thenReturn(null);
 

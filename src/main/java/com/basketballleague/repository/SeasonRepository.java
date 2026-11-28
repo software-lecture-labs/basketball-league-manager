@@ -90,4 +90,14 @@ public class SeasonRepository {
                 .setParameter("seasonId", seasonId)
                 .getResultList();
     }
+
+    /**
+     * Seasons that include the team, newest start date first.
+     */
+    public List<Season> findByTeamId(long teamId) {
+        return em.createQuery("SELECT s FROM Season s JOIN s.teamIds seasonTeamId"
+                        + " WHERE seasonTeamId = :teamId ORDER BY s.startDate DESC, s.id DESC", Season.class)
+                .setParameter("teamId", teamId)
+                .getResultList();
+    }
 }

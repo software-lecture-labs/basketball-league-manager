@@ -32,7 +32,7 @@
             <input type="search" id="team-search" placeholder="Takım veya şehir ara" autocomplete="off">
         </label>
         <ol class="team-list" id="team-list" aria-label="Takım listesi"></ol>
-        <p class="notice" id="team-notice" hidden></p>
+        <p class="notice" id="team-notice" role="status" aria-live="polite" hidden></p>
     </section>
 
     <section class="sheet" id="sheet" aria-live="polite" tabindex="-1">
@@ -60,7 +60,40 @@
                 </thead>
                 <tbody id="roster-body"></tbody>
             </table>
-            <p class="notice" id="roster-notice" hidden></p>
+            <p class="notice" id="roster-notice" role="status" aria-live="polite" hidden></p>
+
+            <section class="season-card" id="team-season-panel" aria-labelledby="team-season-title" hidden>
+                <header class="season-card-head">
+                    <div>
+                        <p class="section-eyebrow">TAKIM PERFORMANSI</p>
+                        <h3 id="team-season-title">Sezon özeti</h3>
+                    </div>
+                    <label class="season-picker" for="team-season-select">
+                        Sezon
+                        <select id="team-season-select" disabled>
+                            <option value="">Sezonlar yükleniyor...</option>
+                        </select>
+                    </label>
+                </header>
+                <p class="notice" id="team-season-notice" role="status" aria-live="polite" hidden></p>
+                <div id="team-season-content" hidden>
+                    <dl class="season-stats">
+                        <div><dt>Sıra</dt><dd id="season-rank">-</dd></div>
+                        <div><dt>Oynanan</dt><dd id="season-played">0</dd></div>
+                        <div><dt>Galibiyet</dt><dd id="season-won">0</dd></div>
+                        <div><dt>Mağlubiyet</dt><dd id="season-lost">0</dd></div>
+                        <div><dt>Sayı farkı</dt><dd id="season-point-diff">0</dd></div>
+                        <div><dt>Atılan sayı</dt><dd id="season-points-for">0</dd></div>
+                        <div><dt>Yenilen sayı</dt><dd id="season-points-against">0</dd></div>
+                        <div><dt>Lig puanı</dt><dd id="season-league-points">0</dd></div>
+                    </dl>
+                    <div class="recent-games-section">
+                        <h4>Son 5 maç</h4>
+                        <ol class="recent-games" id="recent-games" aria-live="polite"></ol>
+                        <p class="notice" id="recent-games-empty" hidden>Bu sezonda henüz onaylanmış maç yok.</p>
+                    </div>
+                </div>
+            </section>
         </article>
     </section>
 </main>

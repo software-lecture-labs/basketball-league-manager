@@ -32,9 +32,15 @@
 
             <!-- Durum Filtresi: Tümü / Oynanmış / Oynanmamış -->
             <div class="filter-group" role="group" aria-label="Maç durumu filtresi">
-                <button type="button" class="filter-btn active" data-filter="ALL">Tüm Maçlar</button>
-                <button type="button" class="filter-btn" data-filter="SCHEDULED">Oynanmamış</button>
-                <button type="button" class="filter-btn" data-filter="FINISHED">Oynanmış</button>
+                <button type="button" class="filter-btn active" data-filter="ALL" aria-pressed="true">
+                    Tüm Maçlar
+                </button>
+                <button type="button" class="filter-btn" data-filter="SCHEDULED" aria-pressed="false">
+                    Oynanmamış
+                </button>
+                <button type="button" class="filter-btn" data-filter="FINISHED" aria-pressed="false">
+                    Oynanmış
+                </button>
             </div>
         </div>
 
@@ -58,7 +64,7 @@
         </div>
 
         <!-- Bildirim ve Durum Mesajları -->
-        <p class="notice" id="fixtures-notice" hidden></p>
+        <p class="notice" id="fixtures-notice" role="status" aria-live="polite" hidden></p>
 
         <!-- Fikstür Kart Alanı -->
         <div id="fixtures-container" class="rounds-container" aria-live="polite">

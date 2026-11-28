@@ -247,8 +247,8 @@
         rows.forEach(function (row) {
             var qNo = Number(row.dataset.quarter);
             var inputs = row.querySelectorAll('input');
-            var h = parseInt(inputs[0].value, 10);
-            var a = parseInt(inputs[1].value, 10);
+            var h = Number.parseInt(inputs[0].value, 10);
+            var a = Number.parseInt(inputs[1].value, 10);
             list.push({
                 quarterNo: qNo,
                 homePoints: Number.isNaN(h) ? 0 : h,
@@ -367,7 +367,7 @@
         var awaySum = 0;
         var entries = [];
         inputs.forEach(function (inp) {
-            var val = parseInt(inp.value, 10);
+            var val = Number.parseInt(inp.value, 10);
             var pts = Number.isNaN(val) ? 0 : Math.max(0, val);
             if (inp.dataset.side === 'home') {
                 homeSum += pts;
@@ -502,7 +502,7 @@
         }).catch(function (err) {
             el.standingsTbody.replaceChildren();
             showNotice(el.standingsNotice, err.message, function () {
-                loadSeasonData(seasonId);
+                void loadSeasonData(seasonId);
             });
         });
     }
@@ -674,7 +674,8 @@
         el.seasonSelect.addEventListener('change', function () {
             var id = Number(el.seasonSelect.value);
             if (id > 0) {
-                loadSeasonData(id);
+                // loadSeasonData hatayı kendisi yakalayıp tabloda gösteriyor.
+                void loadSeasonData(id);
             }
         });
 

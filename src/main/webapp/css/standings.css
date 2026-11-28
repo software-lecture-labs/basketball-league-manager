@@ -78,12 +78,6 @@
     text-align: center;
     font-weight: 700;
     color: var(--ink-soft);
-    border-left: 4px solid transparent;
-}
-
-.standings-table tbody tr.playoff-zone td.col-rank {
-    border-left-color: var(--clock);
-    color: var(--ink);
 }
 
 .standings-table td.col-team {
@@ -125,31 +119,11 @@
 }
 
 .standings-legend {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem 1rem;
     margin-top: 1rem;
     padding-top: 0.75rem;
     border-top: 1px solid var(--line);
     color: var(--ink-soft);
     font-size: 0.8rem;
-}
-
-.legend-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    font-weight: 500;
-    color: var(--ink);
-}
-
-.legend-swatch {
-    width: 0.25rem;
-    height: 1rem;
-    background: var(--clock);
-    border-radius: 1px;
 }
 
 /* Maç Sonucu Giriş Formu */
@@ -197,12 +171,6 @@
 .match-form select:disabled {
     background: var(--paper);
     color: var(--ink-soft);
-}
-
-.demo-teams-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
 }
 
 .game-status-meta {
@@ -452,10 +420,6 @@
     .standings-head {
         align-items: stretch;
         flex-direction: column;
-    }
-
-    .demo-teams-row {
-        grid-template-columns: 1fr;
     }
 
     .form-actions {

@@ -62,11 +62,9 @@
         </div>
 
         <footer class="standings-legend">
-            <span class="legend-item">
-                <span class="legend-swatch" aria-hidden="true"></span>
-                İlk 6: Playoff bölgesi
+            <span class="legend-rule">
+                Galibiyet 2, mağlubiyet 1 puan · Eşitlikte ikili averaj uygulanır
             </span>
-            <span class="legend-rule">Galibiyet 2, mağlubiyet 1 puan · Eşitlikte ikili averaj uygulanır</span>
         </footer>
     </section>
 
@@ -86,19 +84,6 @@
                     <option value="">Maçlar yükleniyor...</option>
                 </select>
                 <p class="game-status-meta" id="selected-game-meta" hidden></p>
-            </div>
-
-            <div id="demo-team-picker" hidden>
-                <div class="demo-teams-row">
-                    <div>
-                        <label class="field-label" for="demo-home-team">Ev sahibi</label>
-                        <select id="demo-home-team"></select>
-                    </div>
-                    <div>
-                        <label class="field-label" for="demo-away-team">Deplasman</label>
-                        <select id="demo-away-team"></select>
-                    </div>
-                </div>
             </div>
 
             <div class="scoreboard-preview" aria-live="polite">
@@ -148,10 +133,10 @@
             <p class="form-feedback" id="form-feedback" role="status" aria-live="polite" hidden></p>
 
             <div class="form-actions">
-                <button type="submit" class="primary-btn" id="btn-submit-finish" data-action="finish">
+                <button type="submit" class="primary-btn" id="btn-submit-finish" disabled>
                     Skoru Kaydet (Bitir)
                 </button>
-                <button type="button" class="confirm-btn" id="btn-submit-confirm" data-action="confirm">
+                <button type="button" class="confirm-btn" id="btn-submit-confirm" disabled>
                     Kaydet ve Onayla
                 </button>
             </div>
@@ -161,8 +146,8 @@
 
 <footer class="footnote">
     <p>
-        Takım adları EuroLeague 2025-26 sezonundan alınmıştır. Puan durumu onaylanmış maçlardan anlık hesaplanır;
-        galibiyet 2, mağlubiyet 1 puan verir ve beraberlik durumunda uzatma oynanır.
+        Takım adları EuroLeague 2025-26 sezonundan alınmıştır. Puan durumu onaylanmış maçlardan anlık
+        hesaplanır; galibiyet 2, mağlubiyet 1 puan verir ve beraberlik durumunda uzatma oynanır.
     </p>
 </footer>
 </body>

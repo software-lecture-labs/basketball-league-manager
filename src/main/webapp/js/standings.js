@@ -1,7 +1,6 @@
 /*
  * Puan durumu ana sayfası ve maç sonucu giriş formu.
- * REST API ile çalışır (/api/seasons, /api/seasons/{id}/standings, /api/seasons/{id}/fixtures, /api/games/{id}).
- * Sunucu yoksa veya aktif fikstür bulunamazsa yerel demo moduna geçer.
+ * Veriyi yalnızca REST API'den alır; kurallar sunucuda uygulanır.
  * Sunucudan ve kullanıcıdan gelen metinler her zaman textContent ile yazılır.
  */
 (function () {
@@ -15,29 +14,6 @@
     var MAX_QUARTERS = 10;
     var MAX_PLAYER_POINTS = 200;
 
-    var DEMO_TEAMS = [
-        { id: 1, name: 'Anadolu Efes', city: 'İstanbul' },
-        { id: 2, name: 'AS Monaco', city: 'Monako' },
-        { id: 3, name: 'ASVEL', city: 'Villeurbanne' },
-        { id: 4, name: 'Barcelona', city: 'Barselona' },
-        { id: 5, name: 'Baskonia', city: 'Vitoria-Gasteiz' },
-        { id: 6, name: 'Bayern Munich', city: 'Münih' },
-        { id: 7, name: 'Crvena zvezda', city: 'Belgrad' },
-        { id: 8, name: 'Dubai Basketball', city: 'Dubai' },
-        { id: 9, name: 'Fenerbahçe', city: 'İstanbul' },
-        { id: 10, name: 'Hapoel IBI Tel Aviv', city: 'Tel Aviv' },
-        { id: 11, name: 'Maccabi Tel Aviv', city: 'Tel Aviv' },
-        { id: 12, name: 'Olimpia Milano', city: 'Milano' },
-        { id: 13, name: 'Olympiacos', city: 'Pire' },
-        { id: 14, name: 'Panathinaikos', city: 'Atina' },
-        { id: 15, name: 'Paris Basketball', city: 'Paris' },
-        { id: 16, name: 'Partizan', city: 'Belgrad' },
-        { id: 17, name: 'Real Madrid', city: 'Madrid' },
-        { id: 18, name: 'Valencia Basket', city: 'Valensiya' },
-        { id: 19, name: 'Virtus Bologna', city: 'Bologna' },
-        { id: 20, name: 'Žalgiris', city: 'Kaunas' }
-    ];
-
     var STATUS_LABELS = {
         SCHEDULED: 'Oynanmadı',
         LIVE: 'Canlı',
@@ -45,18 +21,12 @@
         CONFIRMED: 'Onaylandı'
     };
 
-    var collator = new Intl.Collator('tr', { sensitivity: 'base' });
-
     var state = {
-        mode: 'api', // 'api' | 'demo'
         seasons: [],
         selectedSeasonId: null,
-        games: [], // api modunda fikstür maçları
-        selectedGame: null, // GameDetailResponse
-        quarterCount: MIN_QUARTERS,
-        rosters: { home: [], away: [] },
-        demoTeams: [],
-        demoGames: []
+        games: [],
+        selectedGame: null,
+        quarterCount: MIN_QUARTERS
     };
 
     var el = {
@@ -64,14 +34,9 @@
         standingsSubtitle: document.getElementById('standings-subtitle'),
         standingsNotice: document.getElementById('standings-notice'),
         standingsTbody: document.getElementById('standings-tbody'),
-        matchModeHelp: document.getElementById('match-mode-help'),
         matchForm: document.getElementById('match-entry-form'),
-        apiGamePicker: document.getElementById('api-game-picker'),
         gameSelect: document.getElementById('game-select'),
         selectedGameMeta: document.getElementById('selected-game-meta'),
-        demoTeamPicker: document.getElementById('demo-team-picker'),
-        demoHomeTeam: document.getElementById('demo-home-team'),
-        demoAwayTeam: document.getElementById('demo-away-team'),
         previewHomeName: document.getElementById('preview-home-name'),
         previewAwayName: document.getElementById('preview-away-name'),
         totalHome: document.getElementById('total-home'),
@@ -101,14 +66,15 @@
         return fetch(url, options).then(function (response) {
             return response.json().catch(function () { return null; }).then(function (data) {
                 if (!response.ok) {
-                    var detail = data && data.detail ? data.detail
+                    var detail = data && data.detail
+                        ? data.detail
                         : 'Sunucu ' + response.status + ' yanıtı verdi.';
                     throw new Error(detail);
                 }
                 return data;
             });
         }, function () {
-            throw new Error('Sunucuya ulaşılamadı.');
+            throw new Error('Sunucuya ulaşılamadı; uygulamanın çalıştığını kontrol edin.');
         });
     }
 
@@ -155,6 +121,12 @@
         el.formFeedback.hidden = !message;
     }
 
+    function createNumCell(value) {
+        var td = document.createElement('td');
+        td.textContent = String(value);
+        return td;
+    }
+
     function renderStandingsTable(rows) {
         el.standingsTbody.replaceChildren();
         if (!rows || rows.length === 0) {
@@ -165,9 +137,6 @@
 
         rows.forEach(function (row) {
             var tr = document.createElement('tr');
-            if (row.rank <= 6) {
-                tr.className = 'playoff-zone';
-            }
 
             var tdRank = document.createElement('td');
             tdRank.className = 'col-rank';
@@ -211,12 +180,6 @@
         });
     }
 
-    function createNumCell(value) {
-        var td = document.createElement('td');
-        td.textContent = String(value);
-        return td;
-    }
-
     // --- Çeyrek satırları ---
 
     function renderQuarterInputs(existingQuarters) {
@@ -228,7 +191,11 @@
             var existing = existingQuarters
                 ? existingQuarters.find(function (item) { return item.quarterNo === q; })
                 : null;
-            appendQuarterRow(q, existing ? existing.homePoints : 0, existing ? existing.awayPoints : 0);
+            appendQuarterRow(
+                q,
+                existing ? existing.homePoints : 0,
+                existing ? existing.awayPoints : 0
+            );
         }
         updateOtButtons();
         recomputeTotals();
@@ -304,30 +271,9 @@
         updatePlayerStatsSum();
     }
 
-    function validateQuarters(quarters) {
-        var homeRunning = 0;
-        var awayRunning = 0;
-        for (var i = 0; i < quarters.length; i++) {
-            var q = quarters[i];
-            if (q.homePoints < 0 || q.awayPoints < 0 || q.homePoints > 100 || q.awayPoints > 100) {
-                return 'Çeyrek skorları 0 ile 100 arasında olmalıdır.';
-            }
-            if (q.quarterNo > 4 && homeRunning !== awayRunning) {
-                return q.quarterNo + '. periyot (uzatma) yalnızca önceki çeyrekler sonunda skor eşitse girilebilir.';
-            }
-            homeRunning += q.homePoints;
-            awayRunning += q.awayPoints;
-        }
-        if (homeRunning === awayRunning) {
-            return 'Basketbolda maç berabere bitemez; uzatma (OT) periyodu ekleyin.';
-        }
-        return null;
-    }
-
-    // --- Oyuncu Sayıları (API modunda onay için) ---
+    // --- Oyuncu Sayıları ---
 
     function loadRostersForSelectedGame(game) {
-        state.rosters = { home: [], away: [] };
         el.playerStatsColumns.replaceChildren();
         el.playerStatsNotice.hidden = true;
 
@@ -341,25 +287,23 @@
             loadTeamPlayers(game.homeTeam.id, 0, []),
             loadTeamPlayers(game.awayTeam.id, 0, [])
         ]).then(function (results) {
-            state.rosters.home = results[0];
-            state.rosters.away = results[1];
             renderPlayerStatsInputs(game, results[0], results[1]);
-        }).catch(function () {
-            el.playerStatsNotice.textContent = 'Takım kadroları yüklenemedi.';
+        }).catch(function (err) {
+            el.playerStatsNotice.textContent = err.message;
             el.playerStatsNotice.hidden = false;
         });
     }
 
     function loadTeamPlayers(teamId, page, collected) {
-        return requestJson(API_TEAMS + '/' + teamId + '/players?page=' + page + '&size=' + PAGE_SIZE)
-            .then(function (res) {
-                var items = res.items || [];
-                var all = collected.concat(items);
-                if (items.length > 0 && res.totalItems !== undefined && all.length < res.totalItems) {
-                    return loadTeamPlayers(teamId, page + 1, all);
-                }
-                return all;
-            });
+        var url = API_TEAMS + '/' + teamId + '/players?page=' + page + '&size=' + PAGE_SIZE;
+        return requestJson(url).then(function (res) {
+            var items = res.items || [];
+            var all = collected.concat(items);
+            if (items.length > 0 && res.totalItems !== undefined && all.length < res.totalItems) {
+                return loadTeamPlayers(teamId, page + 1, all);
+            }
+            return all;
+        });
     }
 
     function renderPlayerStatsInputs(game, homePlayers, awayPlayers) {
@@ -373,7 +317,8 @@
         }
 
         if (homePlayers.length === 0 || awayPlayers.length === 0) {
-            el.playerStatsNotice.textContent = 'Onay için her iki takımın da kadrosunda oyuncu olmalıdır.';
+            el.playerStatsNotice.textContent =
+                'Onay için her iki takımın da kadrosunda oyuncu olmalıdır.';
             el.playerStatsNotice.hidden = false;
         }
 
@@ -437,9 +382,6 @@
     }
 
     function updatePlayerStatsSum() {
-        if (state.mode !== 'api') {
-            return;
-        }
         var stats = collectPlayerStats();
         var targetHome = Number(el.totalHome.textContent) || 0;
         var targetAway = Number(el.totalAway.textContent) || 0;
@@ -456,7 +398,8 @@
     }
 
     function distributePoints(side, total) {
-        var inputs = Array.from(el.playerStatsColumns.querySelectorAll('input[data-side="' + side + '"]'));
+        var selector = 'input[data-side="' + side + '"]';
+        var inputs = Array.from(el.playerStatsColumns.querySelectorAll(selector));
         if (inputs.length === 0) {
             return;
         }
@@ -468,26 +411,66 @@
         });
     }
 
-    // --- API Modu Akışı ---
+    // --- API Akışı ---
 
-    function initApiMode() {
+    function init() {
+        el.standingsNotice.hidden = true;
+        el.standingsSubtitle.textContent = 'Sezonlar yükleniyor...';
+
         requestJson(API_SEASONS + '?page=0&size=' + PAGE_SIZE)
             .then(function (data) {
                 var seasons = data.items || [];
                 if (seasons.length === 0) {
-                    throw new Error('Sezon bulunamadı');
+                    handleEmptySeasons();
+                    return;
                 }
-                state.mode = 'api';
                 state.seasons = seasons;
                 renderSeasonSelector(seasons);
 
-                var preferred = seasons.find(function (s) { return s.status === 'ACTIVE'; }) || seasons[0];
+                var preferred = seasons.find(function (s) {
+                    return s.status === 'ACTIVE';
+                }) || seasons[0];
                 el.seasonSelect.value = String(preferred.id);
                 return loadSeasonData(preferred.id);
             })
-            .catch(function () {
-                initDemoMode();
+            .catch(function (err) {
+                el.standingsTbody.replaceChildren();
+                el.standingsSubtitle.textContent = 'Veri yüklenemedi';
+                showNotice(el.standingsNotice, err.message, init);
+                disableMatchForm('Sezon verisi alınamadığı için maç sonucu girilemiyor.');
             });
+    }
+
+    function handleEmptySeasons() {
+        el.standingsTbody.replaceChildren();
+        el.standingsSubtitle.textContent = 'Henüz sezon bulunmuyor';
+        el.seasonSelect.replaceChildren();
+        var opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Sezon yok';
+        el.seasonSelect.appendChild(opt);
+        el.seasonSelect.disabled = true;
+
+        showNotice(
+            el.standingsNotice,
+            'Henüz sezon oluşturulmamış. Önce Yönetici sayfasından sezon oluşturun.'
+        );
+        disableMatchForm('Önce Yönetici sayfasından sezon oluşturun ve fikstür üretin.');
+    }
+
+    function disableMatchForm(selectText) {
+        el.gameSelect.replaceChildren();
+        var opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = selectText;
+        el.gameSelect.appendChild(opt);
+        el.gameSelect.disabled = true;
+        el.btnSubmitFinish.disabled = true;
+        el.btnSubmitConfirm.disabled = true;
+        el.selectedGameMeta.hidden = true;
+        el.playerStatsBox.hidden = true;
+        el.previewHomeName.textContent = 'Ev Sahibi';
+        el.previewAwayName.textContent = 'Deplasman';
     }
 
     function renderSeasonSelector(seasons) {
@@ -510,11 +493,17 @@
 
         return Promise.all([
             requestJson(API_SEASONS + '/' + seasonId + '/standings'),
-            requestJson(API_SEASONS + '/' + seasonId + '/fixtures').catch(function () { return null; })
+            requestJson(API_SEASONS + '/' + seasonId + '/fixtures').catch(function () {
+                return null;
+            })
         ]).then(function (results) {
             renderStandingsTable(results[0]);
-            var fixture = results[1];
-            populateFixtureGames(fixture);
+            populateFixtureGames(results[1]);
+        }).catch(function (err) {
+            el.standingsTbody.replaceChildren();
+            showNotice(el.standingsNotice, err.message, function () {
+                loadSeasonData(seasonId);
+            });
         });
     }
 
@@ -535,33 +524,26 @@
         }
 
         state.games = allGames;
-        el.gameSelect.replaceChildren();
-
         if (allGames.length === 0) {
-            var emptyOpt = document.createElement('option');
-            emptyOpt.value = '';
-            emptyOpt.textContent = 'Bu sezonda henüz fikstür üretilmemiş';
-            el.gameSelect.appendChild(emptyOpt);
-            el.gameSelect.disabled = true;
-            el.btnSubmitFinish.disabled = true;
-            el.btnSubmitConfirm.disabled = true;
-            el.selectedGameMeta.hidden = true;
-            el.playerStatsBox.hidden = true;
-            el.previewHomeName.textContent = 'Ev Sahibi';
-            el.previewAwayName.textContent = 'Deplasman';
+            disableMatchForm('Bu sezonda henüz fikstür üretilmemiş');
             return;
         }
 
+        el.gameSelect.replaceChildren();
         el.gameSelect.disabled = false;
         allGames.forEach(function (g) {
             var opt = document.createElement('option');
             opt.value = String(g.id);
-            opt.textContent = g.roundNumber + '. Hafta · ' + g.homeTeam.name + ' – ' + g.awayTeam.name
-                + ' (' + (STATUS_LABELS[g.status] || g.status) + ')';
+            var statusLabel = STATUS_LABELS[g.status] || g.status;
+            opt.textContent = g.roundNumber + '. Hafta · '
+                + g.homeTeam.name + ' – ' + g.awayTeam.name
+                + ' (' + statusLabel + ')';
             el.gameSelect.appendChild(opt);
         });
 
-        var firstEditable = allGames.find(function (g) { return g.status !== 'CONFIRMED'; }) || allGames[0];
+        var firstEditable = allGames.find(function (g) {
+            return g.status !== 'CONFIRMED';
+        }) || allGames[0];
         el.gameSelect.value = String(firstEditable.id);
         loadSelectedGameDetail(firstEditable.id);
     }
@@ -577,8 +559,9 @@
                 el.previewAwayName.textContent = detail.awayTeam.name;
 
                 var isConfirmed = detail.status === 'CONFIRMED';
-                el.selectedGameMeta.textContent = detail.roundNumber + '. Hafta · Durum: '
-                    + (STATUS_LABELS[detail.status] || detail.status);
+                var statusLabel = STATUS_LABELS[detail.status] || detail.status;
+                el.selectedGameMeta.textContent =
+                    detail.roundNumber + '. Hafta · Durum: ' + statusLabel;
                 el.selectedGameMeta.hidden = false;
 
                 el.btnSubmitFinish.disabled = isConfirmed;
@@ -586,14 +569,17 @@
 
                 renderQuarterInputs(detail.quarters);
                 loadRostersForSelectedGame(detail);
-                setFeedback(isConfirmed ? 'Bu maç onaylanmış durumda; skoru değiştirilemez.' : '', '');
+                setFeedback(
+                    isConfirmed ? 'Bu maç onaylanmış durumda; skoru değiştirilemez.' : '',
+                    ''
+                );
             })
             .catch(function (err) {
                 setFeedback(err.message, 'error');
             });
     }
 
-    function submitApiGame(shouldConfirm) {
+    function submitGame(shouldConfirm) {
         var game = state.selectedGame;
         if (!game) {
             setFeedback('Lütfen önce bir maç seçin.', 'error');
@@ -605,23 +591,19 @@
         }
 
         var quarters = readQuarters();
-        var err = validateQuarters(quarters);
-        if (err) {
-            setFeedback(err, 'error');
-            return;
-        }
-
+        var stats = collectPlayerStats();
         if (shouldConfirm) {
-            var stats = collectPlayerStats();
             var targetHome = Number(el.totalHome.textContent) || 0;
             var targetAway = Number(el.totalAway.textContent) || 0;
             if (stats.homeSum !== targetHome || stats.awaySum !== targetAway) {
-                autofillPlayerStats();
-                stats = collectPlayerStats();
-                if (stats.homeSum !== targetHome || stats.awaySum !== targetAway) {
-                    setFeedback('Onay için oyuncu sayıları toplamı maç skoruna eşit olmalıdır.', 'error');
-                    return;
-                }
+                el.playerStatsBox.open = true;
+                setFeedback(
+                    'Onay için oyuncu sayıları toplamı maç skoruna eşit olmalıdır '
+                    + '(Ev: ' + stats.homeSum + '/' + targetHome
+                    + ', Dep: ' + stats.awaySum + '/' + targetAway + ').',
+                    'error'
+                );
+                return;
             }
         }
 
@@ -632,48 +614,51 @@
         var chain = Promise.resolve(game);
         if (game.status === 'SCHEDULED') {
             chain = chain.then(function (current) {
-                return requestJson(API_GAMES + '/' + current.id + '/start', 'POST', { version: current.version });
+                var url = API_GAMES + '/' + current.id + '/start';
+                return requestJson(url, 'POST', { version: current.version });
             });
         } else if (game.status === 'FINISHED') {
             chain = chain.then(function (current) {
-                return requestJson(API_GAMES + '/' + current.id + '/reopen', 'POST', { version: current.version });
+                var url = API_GAMES + '/' + current.id + '/reopen';
+                return requestJson(url, 'POST', { version: current.version });
             });
         }
 
         chain = chain
             .then(function (current) {
-                return requestJson(API_GAMES + '/' + current.id + '/quarters', 'PUT', {
+                var url = API_GAMES + '/' + current.id + '/quarters';
+                return requestJson(url, 'PUT', {
                     version: current.version,
                     quarters: quarters
                 });
             })
             .then(function (current) {
-                return requestJson(API_GAMES + '/' + current.id + '/finish', 'POST', { version: current.version });
+                var url = API_GAMES + '/' + current.id + '/finish';
+                return requestJson(url, 'POST', { version: current.version });
             });
 
         if (shouldConfirm) {
             chain = chain
                 .then(function (current) {
-                    var stats = collectPlayerStats();
-                    return requestJson(API_GAMES + '/' + current.id + '/stats', 'PUT', {
+                    var url = API_GAMES + '/' + current.id + '/stats';
+                    return requestJson(url, 'PUT', {
                         version: current.version,
                         players: stats.entries
                     });
                 })
                 .then(function (current) {
-                    return requestJson(API_GAMES + '/' + current.id + '/confirm', 'POST', { version: current.version });
+                    var url = API_GAMES + '/' + current.id + '/confirm';
+                    return requestJson(url, 'POST', { version: current.version });
                 });
         }
 
         chain
             .then(function (updated) {
                 state.selectedGame = updated;
-                setFeedback(
-                    shouldConfirm
-                        ? 'Maç onaylandı ve puan durumu güncellendi.'
-                        : 'Maç skoru kaydedildi (Oynandı). Puan tablosu için onaylayın.',
-                    'success'
-                );
+                var msg = shouldConfirm
+                    ? 'Maç onaylandı ve puan durumu güncellendi.'
+                    : 'Maç skoru kaydedildi (Oynandı). Puan tablosu için onaylayın.';
+                setFeedback(msg, 'success');
                 return loadSeasonData(state.selectedSeasonId);
             })
             .catch(function (error) {
@@ -681,192 +666,6 @@
                 el.btnSubmitFinish.disabled = false;
                 el.btnSubmitConfirm.disabled = false;
             });
-    }
-
-    // --- Demo Modu (Sunucu veya aktif sezon yoksa) ---
-
-    function initDemoMode() {
-        state.mode = 'demo';
-        el.apiGamePicker.hidden = true;
-        el.demoTeamPicker.hidden = false;
-        el.playerStatsBox.hidden = true;
-        el.btnSubmitConfirm.hidden = true;
-        el.btnSubmitFinish.textContent = 'Maçı Kaydet ve Tabloyu Güncelle';
-        el.matchModeHelp.textContent =
-            'Demo modu: Takımları ve çeyrek skorlarını seçerek puan durumunu canlı test edebilirsiniz.';
-        el.standingsSubtitle.textContent = 'EuroLeague 2025-26 · Yerel demo modu';
-
-        el.seasonSelect.replaceChildren();
-        var opt = document.createElement('option');
-        opt.value = 'demo';
-        opt.textContent = 'EuroLeague 2025-26 (Demo)';
-        el.seasonSelect.appendChild(opt);
-        el.seasonSelect.disabled = true;
-
-        requestJson(API_TEAMS + '?page=0&size=' + PAGE_SIZE)
-            .then(function (data) {
-                return (data && data.items && data.items.length > 0) ? data.items : DEMO_TEAMS;
-            })
-            .catch(function () { return DEMO_TEAMS; })
-            .then(function (teams) {
-                state.demoTeams = teams;
-                populateDemoTeamSelectors(teams);
-                renderQuarterInputs(null);
-                renderStandingsTable(calculateDemoStandings());
-            });
-    }
-
-    function populateDemoTeamSelectors(teams) {
-        el.demoHomeTeam.replaceChildren();
-        el.demoAwayTeam.replaceChildren();
-        teams.forEach(function (t) {
-            var opt1 = document.createElement('option');
-            opt1.value = String(t.id);
-            opt1.textContent = t.name;
-            el.demoHomeTeam.appendChild(opt1);
-            el.demoAwayTeam.appendChild(opt1.cloneNode(true));
-        });
-        if (teams.length > 1) {
-            el.demoHomeTeam.value = String(teams[0].id);
-            el.demoAwayTeam.value = String(teams[1].id);
-        }
-        updateDemoPreviewNames();
-    }
-
-    function updateDemoPreviewNames() {
-        var homeOpt = el.demoHomeTeam.options[el.demoHomeTeam.selectedIndex];
-        var awayOpt = el.demoAwayTeam.options[el.demoAwayTeam.selectedIndex];
-        el.previewHomeName.textContent = homeOpt ? homeOpt.textContent : 'Ev Sahibi';
-        el.previewAwayName.textContent = awayOpt ? awayOpt.textContent : 'Deplasman';
-    }
-
-    function submitDemoGame() {
-        var homeId = Number(el.demoHomeTeam.value);
-        var awayId = Number(el.demoAwayTeam.value);
-        if (homeId === awayId) {
-            setFeedback('Ev sahibi ve deplasman aynı takım olamaz.', 'error');
-            return;
-        }
-        var quarters = readQuarters();
-        var err = validateQuarters(quarters);
-        if (err) {
-            setFeedback(err, 'error');
-            return;
-        }
-        var homeScore = Number(el.totalHome.textContent) || 0;
-        var awayScore = Number(el.totalAway.textContent) || 0;
-
-        state.demoGames.push({
-            homeTeamId: homeId,
-            awayTeamId: awayId,
-            homeScore: homeScore,
-            awayScore: awayScore
-        });
-        renderStandingsTable(calculateDemoStandings());
-        setFeedback('Maç kaydedildi ve puan durumu güncellendi.', 'success');
-        renderQuarterInputs(null);
-    }
-
-    // Java tarafındaki StandingsComparator kurallarını uygular:
-    // Lig puanı -> İkili averaj (H2H) -> Genel averaj -> Atılan sayı -> Takım adı (Türkçe Collator)
-    function calculateDemoStandings() {
-        var statsMap = {};
-        state.demoTeams.forEach(function (t) {
-            statsMap[t.id] = {
-                teamId: t.id,
-                teamName: t.name,
-                played: 0,
-                won: 0,
-                lost: 0,
-                pointsFor: 0,
-                pointsAgainst: 0,
-                pointDiff: 0,
-                leaguePoints: 0
-            };
-        });
-
-        state.demoGames.forEach(function (g) {
-            var h = statsMap[g.homeTeamId];
-            var a = statsMap[g.awayTeamId];
-            if (!h || !a) {
-                return;
-            }
-            h.played++;
-            a.played++;
-            h.pointsFor += g.homeScore;
-            h.pointsAgainst += g.awayScore;
-            a.pointsFor += g.awayScore;
-            a.pointsAgainst += g.homeScore;
-            h.pointDiff = h.pointsFor - h.pointsAgainst;
-            a.pointDiff = a.pointsFor - a.pointsAgainst;
-
-            if (g.homeScore > g.awayScore) {
-                h.won++;
-                h.leaguePoints += 2;
-                a.lost++;
-                a.leaguePoints += 1;
-            } else {
-                a.won++;
-                a.leaguePoints += 2;
-                h.lost++;
-                h.leaguePoints += 1;
-            }
-        });
-
-        var list = Object.keys(statsMap).map(function (k) { return statsMap[k]; });
-        list.sort(function (a, b) {
-            if (b.leaguePoints !== a.leaguePoints) {
-                return b.leaguePoints - a.leaguePoints;
-            }
-            var h2h = compareHeadToHead(a.teamId, b.teamId);
-            if (h2h !== 0) {
-                return h2h;
-            }
-            if (b.pointDiff !== a.pointDiff) {
-                return b.pointDiff - a.pointDiff;
-            }
-            if (b.pointsFor !== a.pointsFor) {
-                return b.pointsFor - a.pointsFor;
-            }
-            return collator.compare(a.teamName, b.teamName);
-        });
-
-        return list.map(function (item, idx) {
-            item.rank = idx + 1;
-            return item;
-        });
-    }
-
-    function compareHeadToHead(teamAId, teamBId) {
-        var ptsA = 0;
-        var ptsB = 0;
-        var diffA = 0;
-        var played = 0;
-
-        state.demoGames.forEach(function (g) {
-            if (g.homeTeamId === teamAId && g.awayTeamId === teamBId) {
-                played++;
-                diffA += (g.homeScore - g.awayScore);
-                ptsA += g.homeScore > g.awayScore ? 2 : 1;
-                ptsB += g.homeScore > g.awayScore ? 1 : 2;
-            } else if (g.homeTeamId === teamBId && g.awayTeamId === teamAId) {
-                played++;
-                diffA += (g.awayScore - g.homeScore);
-                ptsA += g.awayScore > g.homeScore ? 2 : 1;
-                ptsB += g.awayScore > g.homeScore ? 1 : 2;
-            }
-        });
-
-        if (played === 0) {
-            return 0;
-        }
-        if (ptsB !== ptsA) {
-            return ptsB - ptsA;
-        }
-        if (diffA !== 0) {
-            return diffA > 0 ? -1 : 1;
-        }
-        return 0;
     }
 
     // --- Olay Dinleyicileri ---
@@ -885,9 +684,6 @@
                 loadSelectedGameDetail(id);
             }
         });
-
-        el.demoHomeTeam.addEventListener('change', updateDemoPreviewNames);
-        el.demoAwayTeam.addEventListener('change', updateDemoPreviewNames);
 
         el.btnAddOt.addEventListener('click', function () {
             if (state.quarterCount < MAX_QUARTERS) {
@@ -915,22 +711,16 @@
         el.matchForm.addEventListener('submit', function (event) {
             event.preventDefault();
             setFeedback('', '');
-            if (state.mode === 'demo') {
-                submitDemoGame();
-            } else {
-                submitApiGame(false);
-            }
+            submitGame(false);
         });
 
         el.btnSubmitConfirm.addEventListener('click', function () {
             setFeedback('', '');
-            if (state.mode === 'api') {
-                submitApiGame(true);
-            }
+            submitGame(true);
         });
     }
 
     setupEvents();
     renderQuarterInputs(null);
-    initApiMode();
+    init();
 }());

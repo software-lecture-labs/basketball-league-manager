@@ -1,0 +1,213 @@
+.admin-layout {
+    flex: 1;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem var(--gutter) 3rem;
+}
+
+.admin-heading {
+    margin-bottom: 1.75rem;
+}
+
+.admin-eyebrow {
+    margin: 0 0 0.4rem;
+    color: var(--ink-soft);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+}
+
+.admin-heading > p:last-child {
+    margin: 0.65rem 0 0;
+    color: var(--ink-soft);
+}
+
+.admin-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.admin-card {
+    min-width: 0;
+    padding: clamp(1.1rem, 3vw, 1.75rem);
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    border-top: 4px solid var(--line-strong);
+}
+
+.admin-card h2 {
+    font-size: 1.8rem;
+}
+
+.admin-card-wide {
+    grid-column: 1 / -1;
+}
+
+.admin-help {
+    margin: 0.55rem 0 1.25rem;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+}
+
+.admin-form {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.admin-form label,
+.admin-card > label {
+    margin-top: 0.4rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.admin-form input,
+.admin-form select,
+.admin-card > select {
+    width: 100%;
+    min-height: 2.65rem;
+    padding: 0.55rem 0.7rem;
+    color: var(--ink);
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font: inherit;
+}
+
+.admin-form input:disabled,
+.admin-form select:disabled,
+.admin-card > select:disabled {
+    color: var(--ink-soft);
+    background: var(--paper);
+    cursor: not-allowed;
+}
+
+.admin-form-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.admin-form-row > div {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.admin-button {
+    justify-self: start;
+    min-height: 2.65rem;
+    margin-top: 0.65rem;
+    padding: 0.55rem 1rem;
+    color: var(--ink);
+    background: var(--clock);
+    border: 1px solid var(--clock);
+    border-radius: 4px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 120ms ease, opacity 120ms ease;
+}
+
+.admin-button:hover:not(:disabled) {
+    filter: brightness(0.95);
+}
+
+.admin-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.admin-feedback {
+    margin: 0.5rem 0 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.admin-feedback.success {
+    color: #1e663a;
+}
+
+.admin-feedback.error {
+    color: #a3211b;
+}
+
+.season-workspace {
+    display: grid;
+    grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.season-team-form {
+    align-content: start;
+}
+
+.season-members h3 {
+    margin: 0 0 0.65rem;
+    font-size: 1rem;
+}
+
+.season-members ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.season-members li {
+    padding: 0.55rem 0.7rem;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    font-size: 0.9rem;
+}
+
+.admin-empty {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+}
+
+.fixture-form {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+}
+
+.fixture-form .admin-button {
+    margin-top: 0;
+}
+
+.fixture-form .admin-feedback {
+    flex-basis: 100%;
+}
+
+@media (max-width: 760px) {
+    .masthead {
+        flex-wrap: wrap;
+        gap: 0.75rem 1.25rem;
+    }
+
+    .admin-grid,
+    .season-workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-card-wide {
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-form-row {
+        grid-template-columns: 1fr;
+    }
+}

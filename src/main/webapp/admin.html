@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Yönetici Paneli</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="css/teams.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <script src="js/admin.js" defer></script>
+</head>
+<body>
+<header class="masthead">
+    <a class="masthead-title" href="teams.html">Basketbol Ligi</a>
+    <nav aria-label="Bölümler">
+        <a href="teams.html">Takımlar</a>
+        <a href="fixtures.html">Fikstür</a>
+        <a href="admin.html" aria-current="page">Yönetici</a>
+    </nav>
+</header>
+
+<main class="admin-layout">
+    <header class="admin-heading">
+        <p class="admin-eyebrow">YÖNETİM</p>
+        <h1>Yönetici paneli</h1>
+        <p>Takım ve oyuncu ekleyin, sezon oluşturun ve sezon fikstürünü hazırlayın.</p>
+    </header>
+
+    <div class="admin-grid">
+        <section class="admin-card" aria-labelledby="team-form-title">
+            <h2 id="team-form-title">Takım ekle</h2>
+            <p class="admin-help">Takım adı ve şehri lig listesine eklenir.</p>
+            <form id="team-form" class="admin-form">
+                <label for="team-name">Takım adı</label>
+                <input id="team-name" name="name" type="text" maxlength="100" required autocomplete="organization">
+
+                <label for="team-city">Şehir</label>
+                <input id="team-city" name="city" type="text" maxlength="100" required>
+
+                <button class="admin-button" type="submit">Takımı kaydet</button>
+                <p class="admin-feedback" id="team-feedback" role="status" aria-live="polite" hidden></p>
+            </form>
+        </section>
+
+        <section class="admin-card" aria-labelledby="player-form-title">
+            <h2 id="player-form-title">Oyuncu ekle</h2>
+            <p class="admin-help">Oyuncuyu mevcut takımlardan birinin kadrosuna ekleyin.</p>
+            <form id="player-form" class="admin-form">
+                <label for="player-team">Takım</label>
+                <select id="player-team" name="teamId" required disabled>
+                    <option value="">Takımlar yükleniyor...</option>
+                </select>
+
+                <div class="admin-form-row">
+                    <div>
+                        <label for="player-first-name">Ad</label>
+                        <input id="player-first-name" name="firstName" type="text" maxlength="100" required>
+                    </div>
+                    <div>
+                        <label for="player-last-name">Soyad</label>
+                        <input id="player-last-name" name="lastName" type="text" maxlength="100" required>
+                    </div>
+                </div>
+
+                <div class="admin-form-row">
+                    <div>
+                        <label for="player-jersey">Forma numarası</label>
+                        <input id="player-jersey" name="jerseyNumber" type="number" min="0" max="99"
+                               step="1" required>
+                    </div>
+                    <div>
+                        <label for="player-position">Pozisyon</label>
+                        <select id="player-position" name="position" required>
+                            <option value="">Pozisyon seçin</option>
+                            <option value="PG">PG · Oyun kurucu</option>
+                            <option value="SG">SG · Şutör guard</option>
+                            <option value="SF">SF · Kısa forvet</option>
+                            <option value="PF">PF · Uzun forvet</option>
+                            <option value="C">C · Pivot</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="admin-button" id="player-submit" type="submit" disabled>Oyuncuyu kaydet</button>
+                <p class="admin-feedback" id="player-feedback" role="status" aria-live="polite" hidden></p>
+            </form>
+        </section>
+
+        <section class="admin-card" aria-labelledby="season-form-title">
+            <h2 id="season-form-title">Sezon oluştur</h2>
+            <p class="admin-help">Oluşturduğunuz sezon taslak olarak açılır.</p>
+            <form id="season-form" class="admin-form">
+                <label for="season-name">Sezon adı</label>
+                <input id="season-name" name="name" type="text" maxlength="100" required
+                       placeholder="Örn. 2026-27 Sezonu">
+
+                <label for="season-start-date">Başlangıç tarihi</label>
+                <input id="season-start-date" name="startDate" type="date" required>
+
+                <button class="admin-button" type="submit">Sezonu oluştur</button>
+                <p class="admin-feedback" id="season-feedback" role="status" aria-live="polite" hidden></p>
+            </form>
+        </section>
+
+        <section class="admin-card admin-card-wide" aria-labelledby="fixture-form-title">
+            <h2 id="fixture-form-title">Sezon fikstürü</h2>
+            <p class="admin-help">
+                Önce taslak sezona takımları ekleyin. En az iki takım olduğunda fikstür oluşturabilirsiniz.
+                Fikstür sezonu başlatır ve takım listesini kilitler.
+            </p>
+
+            <label for="season-select">Taslak sezon</label>
+            <select id="season-select" name="seasonId" required disabled>
+                <option value="">Taslak sezonlar yükleniyor...</option>
+            </select>
+
+            <div class="season-workspace">
+                <form id="season-team-form" class="admin-form season-team-form">
+                    <label for="season-team-select">Sezona eklenecek takım</label>
+                    <select id="season-team-select" name="teamId" required disabled>
+                        <option value="">Önce sezon seçin</option>
+                    </select>
+                    <button class="admin-button" id="season-team-submit" type="submit" disabled>
+                        Takımı sezona ekle
+                    </button>
+                    <p class="admin-feedback" id="season-team-feedback" role="status" aria-live="polite" hidden></p>
+                </form>
+
+                <div class="season-members">
+                    <h3>Sezondaki takımlar <span id="season-team-count">(0)</span></h3>
+                    <ul id="season-team-list" aria-live="polite"></ul>
+                    <p class="admin-empty" id="season-team-empty">Henüz sezon seçilmedi.</p>
+                </div>
+            </div>
+
+            <form id="fixture-form" class="fixture-form">
+                <button class="admin-button" id="fixture-submit" type="submit" disabled>Fikstür oluştur</button>
+                <p class="admin-feedback" id="fixture-feedback" role="status" aria-live="polite" hidden></p>
+            </form>
+        </section>
+    </div>
+</main>
+
+<footer class="footnote">
+    <p>Fikstür oluşturulduktan sonra sezon takımları değiştirilemez.</p>
+</footer>
+</body>
+</html>

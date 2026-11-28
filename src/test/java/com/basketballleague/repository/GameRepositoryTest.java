@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.basketballleague.entity.Game;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.TypedQuery;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,5 +68,31 @@ class GameRepositoryTest {
         when(gameQuery.getResultList()).thenReturn(games);
 
         assertThat(repository.findConfirmedBySeasonId(5L)).isEqualTo(games);
+    }
+
+    @Test
+    void findByIdReturnsEmptyForAnUnknownGame() {
+        when(em.find(Game.class, 99L)).thenReturn(null);
+
+        assertThat(repository.findById(99L)).isEmpty();
+    }
+
+    @Test
+    void findByIdReturnsTheGame() {
+        final Game game = new Game(5L, 1, 10L, 20L);
+        when(em.find(Game.class, 7L)).thenReturn(game);
+
+        assertThat(repository.findById(7L)).containsSame(game);
+    }
+
+    @Test
+    void forceVersionIncrementLocksTheGameThenFlushes() {
+        final Game game = new Game(5L, 1, 10L, 20L);
+
+        repository.forceVersionIncrement(game);
+
+        final InOrder order = inOrder(em);
+        order.verify(em).lock(game, LockModeType.OPTIMISTIC_FORCE_INCREMENT);
+        order.verify(em).flush();
     }
 }

@@ -32,6 +32,7 @@ final class ProblemCatalog {
             case SEASON_FULL -> "Sezondaki takım sayısı üst sınıra ulaştı.";
             case INVALID_GAME -> "Maç için sezon, tur ve birbirinden farklı iki takım gerekir.";
             case SEASON_NOT_FOUND -> "İstenen sezon bulunamadı.";
+            case GAME_NOT_FOUND -> "İstenen maç bulunamadı.";
             case SEASON_NAME_TAKEN -> "Bu adda bir sezon zaten var.";
             case INVALID_QUARTER_SCORE ->
                     "Çeyrek skorları 1'den başlayarak boşluksuz artmalı, sayılar negatif olmamalı ve eşitlik "
@@ -44,7 +45,7 @@ final class ProblemCatalog {
                     "Her oyuncu sayısı kaydında oyuncu ve takım zorunludur, sayı negatif olamaz ve bir oyuncu "
                             + "listede yalnızca bir kez yer alır.";
             case CONCURRENT_UPDATE ->
-                    "Maç sizden önce başka bir işlem tarafından güncellendi; sayfayı yenileyip tekrar deneyin.";
+                    "Kayıt siz işlem yaparken başka bir istekle değiştirildi. Güncel hâlini yükleyip yeniden deneyin.";
         };
     }
 

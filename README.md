@@ -414,14 +414,15 @@ yalnızca sunucu logundadır.
 | Kayıt bulunamadı                         | 404      | kayda özel, ör. `TEAM_NOT_FOUND`            | DEBUG                               |
 | Desteklenmeyen yöntem veya içerik türü   | 405, 415 | `HTTP_405`, `HTTP_415` …                    | DEBUG                               |
 | İş kuralı ihlali (`DomainException`)     | 409      | kurala özel, ör. `INVALID_FIXTURE_INPUT`    | INFO                                |
+| Eşzamanlı güncelleme (optimistic lock)   | 409      | `CONCURRENT_UPDATE`                         | INFO                                |
+| Veri bütünlüğü ihlali (unique, FK)       | 409      | `DATA_CONFLICT`                             | WARN                                |
 | Beklenmeyen hata                         | 500      | `INTERNAL_ERROR`                            | ERROR (stack trace yalnızca burada) |
 
 - `code` kalıcıdır; istemci karar verirken `detail` metnine değil `code`'a bakar. İş kuralı kodlarının tam
   listesi [`ErrorCode`](src/main/java/com/basketballleague/domain/ErrorCode.java)'dadır, Türkçe `detail`
   metinleri `ProblemCatalog`'dadır.
-- **Henüz yok ([#13](https://github.com/software-lecture-labs/basketball-league-manager/issues/13)):**
-  eşzamanlı güncelleme çakışması (optimistic lock) ve veri bütünlüğü ihlali (unique, foreign key) için 409
-  yanıtları. Şimdilik bu durumlar 500 döner.
+- Eşzamanlı güncelleme ve veri bütünlüğü hataları commit sırasında transaction istisnalarına sarılı gelebilir;
+  sebep zinciri taranır. Kısıt adı ve SQL mesajı istemciye gönderilmez, yalnızca sunucu loguna yazılır.
 - Loglama SLF4J API ve `slf4j-jdk14` bağlayıcısıyla yapılır; loglar Payara'nın `java.util.logging` altyapısına,
   yani sunucu konsoluna ve log dosyasına yazılır. `System.out` ve `printStackTrace` kullanılmaz (ArchUnit kuralı).
 

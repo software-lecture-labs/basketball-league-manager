@@ -44,7 +44,7 @@ final class ProblemCatalog {
                     "Her oyuncu sayısı kaydında oyuncu ve takım zorunludur, sayı negatif olamaz ve bir oyuncu "
                             + "listede yalnızca bir kez yer alır.";
             case CONCURRENT_UPDATE ->
-                    "Maç sizden önce başka bir işlem tarafından güncellendi; sayfayı yenileyip tekrar deneyin.";
+                    "Kayıt siz işlem yaparken başka bir istekle değiştirildi. Güncel hâlini yükleyip yeniden deneyin.";
         };
     }
 

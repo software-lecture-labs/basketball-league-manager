@@ -41,6 +41,17 @@
         <maven-failsafe-plugin.version>3.6.1</maven-failsafe-plugin.version>
         <maven-war-plugin.version>3.5.1</maven-war-plugin.version>
         <jacoco-maven-plugin.version>0.8.16</jacoco-maven-plugin.version>
+        <sonar-maven-plugin.version>5.9.0.7382</sonar-maven-plugin.version>
+
+        <!-- SonarQube analysis; the server URL and token come from the command line, never from this file. -->
+        <sonar.projectKey>basketball-league-manager</sonar.projectKey>
+        <sonar.projectName>Basketball League Manager</sonar.projectName>
+        <sonar.sources>src/main/java,src/main/resources,src/main/webapp,pom.xml</sonar.sources>
+        <!-- Coverage is read from target/site/jacoco/jacoco.xml, the scanner's default and JaCoCo's output. -->
+        <!-- The UI scripts have no unit tests; they are still analysed for bugs and smells, only not for coverage. -->
+        <sonar.coverage.exclusions>src/main/webapp/**</sonar.coverage.exclusions>
+        <!-- Our hand-written IIFE scripts look like bundles to the scanner, which would skip them silently. -->
+        <sonar.javascript.detectBundles>false</sonar.javascript.detectBundles>
     </properties>
 
     <dependencyManagement>
@@ -185,6 +196,17 @@
 
     <build>
         <finalName>basketball-league</finalName>
+
+        <pluginManagement>
+            <plugins>
+                <!-- Pinned so `./mvnw sonar:sonar` resolves the same scanner on every machine. -->
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>${sonar-maven-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
 
         <plugins>
             <plugin>

@@ -124,7 +124,8 @@
         } else if (drafts.length > 0) {
             el.seasonSelect.value = String(drafts[0].id);
         }
-        selectSeason(el.seasonSelect.value);
+        // Hata loadSeasonTeams içinde yakalanıp gösteriliyor; dönen Promise bilerek beklenmiyor.
+        void selectSeason(el.seasonSelect.value);
     }
 
     function renderSeasonTeamOptions() {
@@ -316,7 +317,7 @@
     });
 
     el.seasonSelect.addEventListener('change', function () {
-        selectSeason(el.seasonSelect.value);
+        void selectSeason(el.seasonSelect.value);
     });
 
     el.seasonTeamForm.addEventListener('submit', function (event) {
@@ -382,7 +383,8 @@
             });
     });
 
-    Promise.all([
+    // Her yükleme kendi hatasını yakalayıp formun altında gösteriyor.
+    void Promise.all([
         refreshTeams().catch(function (error) {
             setFeedback(el.teamFeedback, 'Takımlar yüklenemedi. ' + error.message, 'error');
             setFeedback(el.playerFeedback, 'Takım listesi yüklenemedi. ' + error.message, 'error');

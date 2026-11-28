@@ -31,25 +31,42 @@ Yönetici veriyi girer, sistem hesaplar, herkes güncel tabloyu görür.
 ## Özellikler
 
 > [!NOTE]
-> Proje geliştirme aşamasındadır. Bu bölüm hedeflenen kapsamı anlatır; tamamlanan ve devam eden işler
-> [pull request](https://github.com/software-lecture-labs/basketball-league-manager/pulls?q=is%3Apr) ve
-> [issue](https://github.com/software-lecture-labs/basketball-league-manager/issues) listelerinde izlenir.
+> Bu README **v0.5** sürümünü anlatır. "Planlandı" olarak işaretli özellikler bu sürümde yoktur; ertelenen
+> işler [issue](https://github.com/software-lecture-labs/basketball-league-manager/issues) listesinde izlenir.
 
 İki tür kullanıcı vardır:
 
-- **Lig yöneticisi:** takım ve oyuncu ekler, sezon ve fikstür oluşturur, skor girer ve onaylar, transfer yapar.
+- **Lig yöneticisi:** takım ve oyuncu ekler, sezon ve fikstür oluşturur, skor girer ve onaylar.
 - **Ziyaretçi (oyuncu, taraftar):** giriş yapmadan yalnızca görüntüler.
 
-| Özellik                  | Açıklama                                                                                      |
-| ------------------------ | --------------------------------------------------------------------------------------------- |
-| Takım ve oyuncu yönetimi | Ekleme, listeleme, güncelleme. Oyuncu için yalnızca ad, soyad, forma numarası, pozisyon.      |
-| Otomatik fikstür         | Sezondaki takımlar için çift devreli fikstür; takım sayısı tek veya çift olabilir.            |
-| Maç sonucu               | Çeyrek çeyrek skor (1–4, gerekirse 5+ uzatma) ve oyuncu başına sayı girişi.                   |
-| Maç onayı                | Skorlar tutarlıysa maç onaylanır ve kilitlenir; onaylı maç puan durumuna girer.               |
-| Puan durumu              | Onaylı maçlardan her okumada yeniden hesaplanır; ayrı bir tabloda saklanmaz.                  |
-| Hafif canlı skor         | Yönetici her çeyrek sonunda skoru girer; sayfa birkaç saniyede bir yenilenir (WebSocket yok). |
-| Transfer                 | Oyuncunun takımı değişir ve transfer kaydı aynı transaction içinde oluşur.                    |
-| İstatistik liderleri     | Onaylı maçlardan maç başına sayı ortalaması (PPG = toplam sayı / oynanan maç).                |
+| Özellik                    | Durum     | Açıklama                                                                           |
+| -------------------------- | --------- | ---------------------------------------------------------------------------------- |
+| Takım ve oyuncu yönetimi   | ✔         | Ekleme ve listeleme. Oyuncu için yalnızca ad, soyad, forma numarası, pozisyon.     |
+| Otomatik fikstür           | ✔         | Sezondaki takımlar için çift devreli fikstür; takım sayısı tek veya çift olabilir. |
+| Maç sonucu                 | ✔         | Çeyrek çeyrek skor (1–4, gerekirse 5+ uzatma) ve oyuncu başına sayı girişi.        |
+| Maç onayı                  | ✔         | Skorlar tutarlıysa maç onaylanır ve kilitlenir; onaylı maç puan durumuna girer.    |
+| Puan durumu                | ✔         | Onaylı maçlardan her okumada yeniden hesaplanır; ayrı bir tabloda saklanmaz.       |
+| Takım sezon özeti          | ✔         | Takımın sezondaki puan durumu satırı ve son beş onaylı maçı.                       |
+| Takım ve oyuncu güncelleme | Planlandı | Kayıtlar şimdilik yalnızca eklenir.                                                |
+| Hafif canlı skor           | Kısmen    | `LIVE` durumu ve çeyrek girişi var; birkaç saniyede bir yenilenen canlı sayfa yok. |
+| Transfer                   | Planlandı | Oyuncunun takımı ve transfer kaydı aynı transaction içinde değişecek.              |
+| İstatistik liderleri       | Planlandı | Onaylı maçlardan maç başına sayı ortalaması (PPG = toplam sayı / oynanan maç).     |
+
+### Sayfalar
+
+Sayfalar aynı WAR içinde statik HTML/CSS/JS'tir ve REST API'yi çağırır; adresler
+`http://localhost:8080/basketball-league/` altındadır.
+
+| Sayfa           | Adres           | İçerik                                                                                   |
+| --------------- | --------------- | ---------------------------------------------------------------------------------------- |
+| Puan durumu     | `index.html`    | Sezon seçici, puan tablosu ve maç sonucu giriş formu (çeyrekler, oyuncu sayıları, onay). |
+| Takımlar        | `teams.html`    | Takım listesi, kadro, takımın sezon özeti ve son beş maçı.                               |
+| Fikstür         | `fixtures.html` | Haftalara göre maçlar, durum filtresi, çeyrek ve oyuncu sayılarını gösteren maç detayı.  |
+| Yönetici paneli | `admin.html`    | Takım ve oyuncu ekleme, sezon oluşturma, sezona takım katma, fikstür üretme.             |
+
+> [!WARNING]
+> Kullanıcı girişi bu sürümün kapsamında değildir; yönetici paneli ve sonuç formu korumasızdır. Uygulamayı
+> yalnızca yerel demo ortamında çalıştırın.
 
 **Kapsam dışı:** EuroLeague'in resmî kuralları, playoff ve Final Four, faul ve ceza takibi, maç simülasyonu,
 otomatik veri çekme (scraping), logo ve resmî görseller, oyuncuların ek kişisel verileri.
@@ -112,12 +129,16 @@ Maç yaşam döngüsü; geçersiz geçişler (ör. `SCHEDULED → CONFIRMED`) i�
 stateDiagram-v2
     direction LR
     [*] --> SCHEDULED
-    SCHEDULED --> LIVE: ilk çeyrek girildi
-    LIVE --> FINISHED: maç bitti
-    FINISHED --> CONFIRMED: yönetici onayladı
+    SCHEDULED --> LIVE: start
+    LIVE --> FINISHED: finish (en az 4 çeyrek, skor eşit değil)
+    FINISHED --> LIVE: reopen (skor düzeltmesi)
+    FINISHED --> CONFIRMED: confirm (skorlar tutarlı)
     CONFIRMED --> [*]
     note right of CONFIRMED: Skor kilitlenir, puan durumuna girer
 ```
+
+Çeyrek skorları ve oyuncu sayıları maç `LIVE` iken girilir; oyuncu sayıları `FINISHED` iken de düzeltilebilir.
+Uç noktalar ve hata kodları [docs/api.md](docs/api.md)'dedir.
 
 ---
 
@@ -195,8 +216,26 @@ sequenceDiagram
     end
 ```
 
-İkinci transaction örneği transferdir: oyuncunun takımı değişir ve transfer kaydı oluşur; kayıt oluşturulamazsa
-takım değişikliği de geri alınır.
+Transfer, ikinci bir çok kayıtlı transaction örneği olarak planlandı (oyuncunun takımı ve transfer kaydı birlikte
+değişir); bu sürümde yoktur.
+
+### SOLID
+
+- **Single Responsibility:** katmanlar ayrı işleri yapar; her servis tek bir iş alanıdır (`TeamService`,
+  `FixtureService`, `GameService`, `StandingService` …). Puan tablosu hesabı veritabanından bağımsız
+  `StandingsTable` sınıfındadır.
+- **Open/Closed:** puanlama [`PointsPolicy`](src/main/java/com/basketballleague/domain/PointsPolicy.java)
+  arayüzüyle (`StandardPointsPolicy`: 2/1), eşitlik bozma
+  [`TieBreaker`](src/main/java/com/basketballleague/domain/TieBreaker.java) zinciriyle yapılır (Strategy).
+  Yeni bir kural, mevcut kuralları değiştirmeden yeni bir sınıf olarak zincire eklenir.
+- **Liskov Substitution:** dört `TieBreaker` (ikili averaj, genel averaj, atılan sayı, takım adı) aynı
+  karşılaştırma sözleşmesine uyar; `StandingsComparator` hangisi olduğunu bilmeden kullanır. Her biri
+  [TieBreakerTest](src/test/java/com/basketballleague/domain/TieBreakerTest.java)'te sınanır.
+- **Interface Segregation:** `PointsPolicy` ve `TieBreaker` tek metotlu arayüzlerdir; her repository yalnızca
+  kendi aggregate'inin sorgularını içerir.
+- **Dependency Inversion:** sıralama somut kurallara değil `TieBreaker` ve `PointsPolicy` soyutlamalarına bağlıdır.
+  Bağımlılıklar CDI ile kurucudan enjekte edilir, zaman `Clock` üzerinden okunur (ikisini de ArchUnit korur).
+  Repository'ler için ayrı arayüz yazılmadı: tek uygulama (JPA) var; bu bilinçli bir sadeleştirmedir.
 
 ### Proje yapısı
 
@@ -209,17 +248,20 @@ basketball-league-manager/
 ├── scripts/                  # Demo sezonu betikleri (demo-sezon.sh, demo-sezon.ps1)
 ├── src/main/java/com/basketballleague/
 │   ├── config/               # RestApplication, DataSourceConfig
-│   ├── domain/               # FixtureGenerator, DomainException, record'lar
+│   ├── domain/               # FixtureGenerator, PointsPolicy, TieBreaker, DomainException, record'lar
 │   ├── dto/
 │   ├── entity/
+│   ├── exception/            # ExceptionMapper'lar, Problem Details
 │   ├── repository/
 │   ├── resource/
 │   └── service/
 ├── src/main/resources/
 │   ├── META-INF/persistence.xml
-│   └── db/migration/         # Flyway migration'ları
+│   └── db/migration/         # Flyway migration'ları (V1–V5)
+├── src/main/webapp/          # Sayfalar: index, teams, fixtures, admin (HTML/CSS/JS)
 ├── src/test/java/com/basketballleague/
-│   └── architecture/         # ArchUnit kuralları
+│   ├── architecture/         # ArchUnit kuralları
+│   └── integration/          # Testcontainers PostgreSQL 18 testleri (*IT)
 ├── .env.example              # Yerel ortam değişkenleri şablonu
 └── pom.xml
 ```
@@ -362,11 +404,8 @@ Betik tekrar çalıştırılabilir: var olan sezonu kullanır, üretilmiş fikst
 `http://localhost:8080/basketball-league/fixtures.html` adresinde görünür. Sayfayı VS Code "Go Live" ile değil,
 Payara üzerinden açın; API yalnızca Payara'da çalışır.
 
-Takım, oyuncu ve sezon yönetim formları `http://localhost:8080/basketball-league/admin.html` adresindedir.
-
-> [!WARNING]
-> Yönetici sayfasında giriş/kimlik doğrulaması yoktur; korumasızdır. Yalnızca yerel demo ortamında kullanın,
-> internete açık üretim ortamında yayınlamayın.
+Betik yerine yönetici panelinden (`admin.html`) de sezon kurulabilir; maç sonuçları ana sayfadaki
+(`index.html`) formdan girilip onaylanır. Bütün sayfalar [Sayfalar](#sayfalar) bölümündedir.
 
 > [!NOTE]
 > Windows "running scripts is disabled" derse betiği bu oturum için izin vererek çalıştırın:
@@ -405,6 +444,30 @@ derleyicinin yakalayamadığı kuralları korur:
 
 **GitHub Actions:** `main` ve `dev`'e her push ve PR'da derleme ve testler (`Build`), CodeQL güvenlik taraması,
 PR'lara boyut ve alan etiketleri.
+
+### Statik analiz (SonarQube)
+
+Analiz yerel SonarQube Community 26.11 ile, varsayılan "Sonar way" kural seti ve kalite kapısıyla yapılır.
+Ayarlar `pom.xml`'dedir; sunucu adresi ve token komut satırından verilir, repoya yazılmaz:
+
+```bash
+./mvnw -B clean verify sonar:sonar -Dsonar.host.url=http://localhost:9000 -Dsonar.token=<token>
+```
+
+v0.5 sonucu (28 Kasım 2026):
+
+| Ölçüm                           | Sonuç                                              |
+| ------------------------------- | -------------------------------------------------- |
+| Quality Gate                    | Geçti                                              |
+| Güvenilirlik / Güvenlik / Bakım | A / A / A                                          |
+| Bug / Açık / Güvenlik noktası   | 0 / 0 / 0                                          |
+| Kod kokusu                      | 0                                                  |
+| Test kapsamı (Java)             | %91.7 (satır %92.3, dal %90.1)                     |
+| Tekrarlanan satır               | %0.8                                               |
+| Analiz edilen kod               | 7527 satır: Java 3333, JS 1922, CSS 1496, HTML 465 |
+
+Arayüz JS'i bug ve kod kokusu için taranır ama birim testi olmadığından kapsam hesabına girmez; kapsam
+yalnızca Java'yı ölçer. Kapsam raporu `verify` ile `target/site/jacoco/index.html` dosyasına da yazılır.
 
 ---
 

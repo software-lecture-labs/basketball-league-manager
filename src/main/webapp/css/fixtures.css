@@ -307,6 +307,121 @@
     animation: livePulse 2s infinite ease-in-out;
 }
 
+.match-detail-button,
+.dialog-close {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--sheet);
+    color: var(--ink);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.match-detail-button {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.match-detail-button:hover,
+.dialog-close:hover {
+    background: var(--paper);
+    border-color: var(--line-strong);
+}
+
+.game-detail-dialog {
+    width: min(900px, calc(100vw - 2rem));
+    max-height: min(90vh, 900px);
+    overflow-y: auto;
+    padding: clamp(1rem, 3vw, 2rem);
+    color: var(--ink);
+    background: var(--sheet);
+    border: 1px solid var(--line-strong);
+    border-top: 5px solid var(--clock);
+}
+
+.game-detail-dialog::backdrop {
+    background: rgb(20 27 38 / 65%);
+}
+
+.game-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.game-detail-header h2 {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 1.8rem;
+}
+
+.dialog-close {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 1.4rem;
+}
+
+.game-detail-meta,
+.game-detail-empty {
+    color: var(--ink-soft);
+}
+
+.game-detail-score {
+    margin: 0.75rem 0;
+    font-family: var(--display);
+    font-size: 2.5rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+
+.game-detail-section {
+    margin-top: 1.25rem;
+}
+
+.game-detail-section h3 {
+    margin: 0 0 0.65rem;
+    font-size: 1rem;
+}
+
+.game-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+
+.game-detail-table th,
+.game-detail-table td {
+    padding: 0.55rem 0.65rem;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+}
+
+.game-detail-table thead th {
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+}
+
+.score-total {
+    font-weight: 700;
+}
+
+.player-score-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.result-entry-error {
+    color: #a3211b;
+    font-weight: 600;
+}
+
 @keyframes livePulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.6; }
@@ -324,5 +439,14 @@
 
     .team-name {
         font-size: 0.875rem;
+    }
+
+    .match-status-col {
+        min-width: 70px;
+    }
+
+    .player-score-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
     }
 }

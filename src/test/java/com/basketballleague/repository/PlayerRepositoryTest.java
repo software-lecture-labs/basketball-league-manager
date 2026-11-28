@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.basketballleague.entity.Player;
@@ -187,5 +188,24 @@ class PlayerRepositoryTest {
         long count = repository.count();
 
         assertThat(count).isEqualTo(150L);
+    }
+
+    @Test
+    @DisplayName("Loads players by id in one query")
+    void findsPlayersByIds() {
+        final List<Player> players = List.of(new Player(team, "Nigel", "Hayes-Davis", 11, Position.SF));
+        when(em.createQuery(anyString(), eq(Player.class))).thenReturn(playerQuery);
+        when(playerQuery.setParameter(eq("ids"), any())).thenReturn(playerQuery);
+        when(playerQuery.getResultList()).thenReturn(players);
+
+        assertThat(repository.findByIds(List.of(7L, 40L))).isEqualTo(players);
+        verify(em).createQuery(anyString(), eq(Player.class));
+    }
+
+    @Test
+    @DisplayName("Does not query the database for an empty id list")
+    void findsNoPlayersForNoIds() {
+        assertThat(repository.findByIds(List.of())).isEmpty();
+        verifyNoInteractions(em);
     }
 }

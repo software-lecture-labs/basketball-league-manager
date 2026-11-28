@@ -4,8 +4,10 @@ import com.basketballleague.entity.Game;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Database access for {@link Game} entities via JPA.
@@ -34,6 +36,22 @@ public class GameRepository {
         games.forEach(em::persist);
         em.flush();
         return games;
+    }
+
+    public Optional<Game> findById(long id) {
+        return Optional.ofNullable(em.find(Game.class, id));
+    }
+
+    /**
+     * Raises the game's version even when only its quarter scores or player points changed: those live in their
+     * own tables, so a plain update would leave the version as it was and a confirmation could pass with stale
+     * data (ADR-0004, PR #5). Called after the domain change, because JPA may apply the increment at once or at
+     * commit. The flush writes it now, so the response carries the version the client must send next.
+     */
+    public void forceVersionIncrement(Game game) {
+        Objects.requireNonNull(game, "Game must not be null");
+        em.lock(game, LockModeType.OPTIMISTIC_FORCE_INCREMENT);
+        em.flush();
     }
 
     /**

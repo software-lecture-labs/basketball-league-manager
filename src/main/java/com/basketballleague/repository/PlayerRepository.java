@@ -5,6 +5,7 @@ import com.basketballleague.entity.Position;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -46,6 +47,19 @@ public class PlayerRepository {
     public Optional<Player> findById(Long id) {
         Objects.requireNonNull(id, "Player id must not be null");
         return Optional.ofNullable(em.find(Player.class, id));
+    }
+
+    /**
+     * The players with the given ids in one query instead of one {@code find} per id. Unknown ids are skipped.
+     */
+    public List<Player> findByIds(Collection<Long> ids) {
+        Objects.requireNonNull(ids, "Player ids must not be null");
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return em.createQuery("SELECT p FROM Player p WHERE p.id IN :ids", Player.class)
+                .setParameter("ids", ids)
+                .getResultList();
     }
 
     public List<Player> findAll() {

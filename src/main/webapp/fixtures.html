@@ -66,10 +66,18 @@
     </section>
 </main>
 
+<dialog class="game-detail-dialog" id="game-detail-dialog" aria-labelledby="game-detail-title">
+    <div class="game-detail-header">
+        <h2 id="game-detail-title">Maç Detayı</h2>
+        <button type="button" class="dialog-close" id="game-detail-close" aria-label="Maç detayını kapat">×</button>
+    </div>
+    <div id="game-detail-content" aria-live="polite"></div>
+</dialog>
+
 <footer class="footnote">
     <p>
-        Fikstür çift devreli lig usulüne (Circle Method - ADR-0008) göre haftalara bölünmüştür. Maç sonuçları ve
-        durumları bu uygulamada üretilen demo verisidir; resmî EuroLeague sonuçları değildir.
+        Fikstür çift devreli lig usulüne (Circle Method - ADR-0008) göre haftalara bölünmüştür.
+        Maç sonuçları uygulamada girilen verilerdir; resmî EuroLeague sonuçları değildir.
     </p>
 </footer>
 </body>

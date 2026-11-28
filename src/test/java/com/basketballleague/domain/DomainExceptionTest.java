@@ -17,6 +17,14 @@ class DomainExceptionTest {
     }
 
     @Test
+    void unknownGameIsANotFoundErrorWithItsOwnCode() {
+        final GameNotFoundException exception = new GameNotFoundException(42L);
+
+        assertThat(exception).isInstanceOf(RecordNotFoundException.class).hasMessageContaining("42");
+        assertThat(exception.code()).isEqualTo(ErrorCode.GAME_NOT_FOUND);
+    }
+
+    @Test
     void rejectsAMissingErrorCode() {
         assertThatNullPointerException()
                 .isThrownBy(() -> new CodelessException())

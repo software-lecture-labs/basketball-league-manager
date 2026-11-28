@@ -326,8 +326,7 @@ Location: http://localhost:8080/basketball-league/api/seasons/1/fixtures
 
 ## Maçlar
 
-> Bu bölüm 3.4a (maç sonucu girişi ve onay) ile uygulanacak sözleşmedir; uç noktalar henüz yoktur. Kararlar
-> [ADR-0004](adr/0004-mac-onayi-transaction.md)'tedir.
+> Kararlar [ADR-0004](adr/0004-mac-onayi-transaction.md)'tedir.
 
 Maç `SCHEDULED → LIVE → FINISHED → CONFIRMED` akışını izler. Bitmiş maç onaydan önce yeniden açılabilir
 (`FINISHED → LIVE`); onaylanmış maç değişmez. Çeyrek skorları ve oyuncu sayıları maçın parçasıdır.
@@ -418,12 +417,12 @@ Maçın bütün çeyreklerini bir arada değiştirir; gönderilmeyen çeyrek sil
 | Alan | Kural |
 | --- | --- |
 | `version` | zorunlu, 0 veya büyük |
-| `quarters` | zorunlu; `quarterNo` 1'den başlar ve boşluksuz artar; sayılar 0 veya büyük |
+| `quarters` | zorunlu, en fazla 10 çeyrek; `quarterNo` 1'den başlar ve boşluksuz artar; sayılar 0–100 |
 | Uzatma | 5. ve sonraki çeyrek yalnızca önceki çeyrekler sonunda skor eşitse girilebilir |
 
 | Durum | `code` | Ne zaman |
 | --- | --- | --- |
-| 400 | `VALIDATION_FAILED` | alan eksik, sayı negatif |
+| 400 | `VALIDATION_FAILED` | alan eksik, sayı negatif veya 100'den büyük, 10'dan fazla çeyrek |
 | 404 | `GAME_NOT_FOUND` | maç yok |
 | 409 | `INVALID_GAME_STATUS_TRANSITION` | maç `LIVE` değil |
 | 409 | `INVALID_QUARTER_SCORE` | çeyrek sırası boşluklu veya tekrarlı, gereksiz uzatma |
@@ -447,11 +446,11 @@ sunucuda belirlenir.
 | Alan | Kural |
 | --- | --- |
 | `version` | zorunlu, 0 veya büyük |
-| `players` | zorunlu; her oyuncu bir kez; `points` 0 veya büyük |
+| `players` | zorunlu, en fazla 40 oyuncu; her oyuncu bir kez; `points` 0–200 |
 
 | Durum | `code` | Ne zaman |
 | --- | --- | --- |
-| 400 | `VALIDATION_FAILED` | alan eksik, sayı negatif, aynı oyuncu iki kez |
+| 400 | `VALIDATION_FAILED` | alan eksik, sayı negatif veya 200'den büyük, aynı oyuncu iki kez, 40'tan fazla oyuncu |
 | 404 | `GAME_NOT_FOUND` | maç yok |
 | 409 | `INVALID_GAME_STATUS_TRANSITION` | maç `LIVE` veya `FINISHED` değil |
 | 409 | `PLAYER_NOT_IN_GAME` | oyuncu yok ya da maçın iki takımından birinde değil |

@@ -3,12 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Basketbol Ligi</title>
-    <!-- Şimdilik tek sayfa takımlar sayfası; fikstür ve puan durumu sayfaları gelince burası ana sayfa olacak. -->
-    <meta http-equiv="refresh" content="0; url=teams.html">
+    <title>Puan Durumu - Basketbol Ligi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="css/teams.css">
+    <link rel="stylesheet" href="css/standings.css">
+    <script src="js/standings.js" defer></script>
 </head>
 <body>
-<p><a href="teams.html">Takımlar sayfasına git</a></p>
-<p><a href="fixtures.html">Fikstür sayfasına git</a></p>
+<header class="masthead">
+    <a class="masthead-title" href="index.html">Basketbol Ligi</a>
+    <nav aria-label="Bölümler">
+        <a href="index.html" aria-current="page">Puan Durumu</a>
+        <a href="teams.html">Takımlar</a>
+        <a href="fixtures.html">Fikstür</a>
+        <a href="admin.html">Yönetici</a>
+    </nav>
+</header>
+
+<main class="standings-layout">
+    <section class="sheet standings-panel" aria-labelledby="standings-heading">
+        <header class="standings-head">
+            <div>
+                <p class="section-eyebrow">LİG TABLOSU</p>
+                <h1 id="standings-heading">Puan Durumu</h1>
+                <p class="standings-subtitle" id="standings-subtitle">Sezon yükleniyor...</p>
+            </div>
+            <label class="season-picker" for="season-select">
+                Sezon
+                <select id="season-select" disabled>
+                    <option value="">Sezonlar yükleniyor...</option>
+                </select>
+            </label>
+        </header>
+
+        <p class="notice" id="standings-notice" role="status" aria-live="polite" hidden></p>
+
+        <div class="table-scroll">
+            <table class="standings-table" id="standings-table">
+                <caption class="visually-hidden">Sezon puan durumu tablosu</caption>
+                <thead>
+                <tr>
+                    <th scope="col" class="col-rank" title="Sıra">#</th>
+                    <th scope="col" class="col-team">Takım</th>
+                    <th scope="col" class="col-num" title="Oynanan maç">O</th>
+                    <th scope="col" class="col-num" title="Galibiyet">G</th>
+                    <th scope="col" class="col-num" title="Mağlubiyet">M</th>
+                    <th scope="col" class="col-num" title="Atılan sayı">A</th>
+                    <th scope="col" class="col-num" title="Yenilen sayı">Y</th>
+                    <th scope="col" class="col-num" title="Sayı averajı">AV</th>
+                    <th scope="col" class="col-pts" title="Lig puanı">P</th>
+                </tr>
+                </thead>
+                <tbody id="standings-tbody"></tbody>
+            </table>
+        </div>
+
+        <footer class="standings-legend">
+            <span class="legend-item">
+                <span class="legend-swatch" aria-hidden="true"></span>
+                İlk 6: Playoff bölgesi
+            </span>
+            <span class="legend-rule">Galibiyet 2, mağlubiyet 1 puan · Eşitlikte ikili averaj uygulanır</span>
+        </footer>
+    </section>
+
+    <section class="sheet match-panel" aria-labelledby="match-heading">
+        <header class="match-head">
+            <p class="section-eyebrow">MAÇ KÂĞIDI</p>
+            <h2 id="match-heading">Maç Sonucu Girişi</h2>
+            <p class="match-help" id="match-mode-help">
+                Fikstürden bir maç seçin, çeyrek skorlarını girin ve sonucu kaydedin.
+            </p>
+        </header>
+
+        <form id="match-entry-form" class="match-form" novalidate>
+            <div id="api-game-picker">
+                <label class="field-label" for="game-select">Maç seçimi</label>
+                <select id="game-select" disabled>
+                    <option value="">Maçlar yükleniyor...</option>
+                </select>
+                <p class="game-status-meta" id="selected-game-meta" hidden></p>
+            </div>
+
+            <div id="demo-team-picker" hidden>
+                <div class="demo-teams-row">
+                    <div>
+                        <label class="field-label" for="demo-home-team">Ev sahibi</label>
+                        <select id="demo-home-team"></select>
+                    </div>
+                    <div>
+                        <label class="field-label" for="demo-away-team">Deplasman</label>
+                        <select id="demo-away-team"></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scoreboard-preview" aria-live="polite">
+                <div class="scoreboard-side">
+                    <span class="scoreboard-label" id="preview-home-name">Ev Sahibi</span>
+                    <strong class="scoreboard-total" id="total-home">0</strong>
+                </div>
+                <span class="scoreboard-sep" aria-hidden="true">–</span>
+                <div class="scoreboard-side scoreboard-side-away">
+                    <span class="scoreboard-label" id="preview-away-name">Deplasman</span>
+                    <strong class="scoreboard-total" id="total-away">0</strong>
+                </div>
+            </div>
+
+            <fieldset class="quarters-fieldset">
+                <legend>Çeyrek skorları</legend>
+                <div class="quarters-header" aria-hidden="true">
+                    <span>Periyot</span>
+                    <span>Ev</span>
+                    <span>Dep</span>
+                </div>
+                <div id="quarters-list" class="quarters-list"></div>
+                <div class="overtime-actions">
+                    <button type="button" class="secondary-btn" id="btn-add-ot">
+                        + Uzatma (OT) ekle
+                    </button>
+                    <button type="button" class="secondary-btn" id="btn-remove-ot" hidden>
+                        Son uzatmayı kaldır
+                    </button>
+                </div>
+            </fieldset>
+
+            <details class="player-stats-box" id="player-stats-box" hidden>
+                <summary>
+                    Oyuncu sayıları <span class="stats-hint">(Maç onayı için zorunlu)</span>
+                </summary>
+                <div class="player-stats-toolbar">
+                    <span class="stats-sum" id="player-stats-sum">Ev: 0/0 · Dep: 0/0</span>
+                    <button type="button" class="secondary-btn" id="btn-autofill-stats">
+                        Sayıları kadroya dağıt
+                    </button>
+                </div>
+                <p class="notice" id="player-stats-notice" hidden></p>
+                <div class="player-stats-columns" id="player-stats-columns"></div>
+            </details>
+
+            <p class="form-feedback" id="form-feedback" role="status" aria-live="polite" hidden></p>
+
+            <div class="form-actions">
+                <button type="submit" class="primary-btn" id="btn-submit-finish" data-action="finish">
+                    Skoru Kaydet (Bitir)
+                </button>
+                <button type="button" class="confirm-btn" id="btn-submit-confirm" data-action="confirm">
+                    Kaydet ve Onayla
+                </button>
+            </div>
+        </form>
+    </section>
+</main>
+
+<footer class="footnote">
+    <p>
+        Takım adları EuroLeague 2025-26 sezonundan alınmıştır. Puan durumu onaylanmış maçlardan anlık hesaplanır;
+        galibiyet 2, mağlubiyet 1 puan verir ve beraberlik durumunda uzatma oynanır.
+    </p>
+</footer>
 </body>
 </html>

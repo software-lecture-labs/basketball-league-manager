@@ -9,6 +9,7 @@
 
     var API_SEASONS = 'api/seasons';
     var API_TEAMS = 'api/teams';
+    var PLAYER_PAGE_SIZE = 100; // API'nin izin verdiği en büyük sayfa boyutu
 
     var STATUS_LABELS = {
         SCHEDULED: 'Oynanmadı',
@@ -22,7 +23,9 @@
         currentRoundNumber: 1,
         showAllRounds: false,
         filter: 'ALL', // 'ALL' | 'SCHEDULED' | 'FINISHED'
-        season: null
+        season: null,
+        isDemo: false,
+        detailRequest: 0 // en son açılan maç detayı isteğinin sırası
     };
 
     var el = {
@@ -33,7 +36,11 @@
         toggleAllBtn: document.getElementById('toggle-all-rounds'),
         filterButtons: document.querySelectorAll('.filter-btn'),
         fixturesContainer: document.getElementById('fixtures-container'),
-        notice: document.getElementById('fixtures-notice')
+        notice: document.getElementById('fixtures-notice'),
+        gameDetailDialog: document.getElementById('game-detail-dialog'),
+        gameDetailTitle: document.getElementById('game-detail-title'),
+        gameDetailContent: document.getElementById('game-detail-content'),
+        gameDetailClose: document.getElementById('game-detail-close')
     };
 
     function getJson(url) {
@@ -48,6 +55,20 @@
         }, function () {
             throw new Error('Sunucuya ulaşılamadı; uygulamanın çalıştığını kontrol edin.');
         });
+    }
+
+    function getTeamPlayers(teamId, page, players) {
+        return getJson(API_TEAMS + '/' + teamId + '/players?page=' + page + '&size=' + PLAYER_PAGE_SIZE)
+            .then(function (response) {
+                var items = response.items || response;
+                var allPlayers = players.concat(items);
+                // Boş sayfa gelirse dur: kadro istekler arasında küçülürse sonsuz döngüye girmesin.
+                if (items.length > 0 && response.totalItems !== undefined
+                        && allPlayers.length < response.totalItems) {
+                    return getTeamPlayers(teamId, page + 1, allPlayers);
+                }
+                return allPlayers;
+            });
     }
 
     // "FC", "EA7" gibi ekleri eler; tek kelimede ilk 3 harfi alır.
@@ -236,6 +257,18 @@
         }
 
         centerCol.append(vs, pill);
+        if (!state.isDemo) {
+            var detailButton = document.createElement('button');
+            detailButton.type = 'button';
+            detailButton.className = 'match-detail-button';
+            detailButton.textContent = 'Maç detayı';
+            detailButton.setAttribute('aria-label', game.homeTeam.name + ' - ' + game.awayTeam.name
+                + ' maç detayını aç');
+            detailButton.addEventListener('click', function () {
+                showGameDetails(game.id);
+            });
+            centerCol.appendChild(detailButton);
+        }
 
         // Deplasman Takımı
         var awaySide = document.createElement('div');
@@ -262,6 +295,168 @@
 
         card.append(homeSide, centerCol, awaySide);
         return card;
+    }
+
+    function appendText(parent, tagName, className, text) {
+        var element = document.createElement(tagName);
+        if (className) element.className = className;
+        element.textContent = text;
+        parent.appendChild(element);
+        return element;
+    }
+
+    function renderQuarterScores(game) {
+        var section = document.createElement('section');
+        section.className = 'game-detail-section';
+        appendText(section, 'h3', '', 'Çeyrek skorları');
+
+        if (!game.quarters || game.quarters.length === 0) {
+            appendText(section, 'p', 'game-detail-empty', 'Bu maç için henüz skor girilmedi.');
+            return section;
+        }
+
+        var table = document.createElement('table');
+        table.className = 'game-detail-table quarter-score-table';
+        var head = table.createTHead().insertRow();
+        appendText(head, 'th', '', 'Takım');
+        game.quarters.forEach(function (quarter) {
+            appendText(head, 'th', '', quarter.quarterNo + '. Ç');
+        });
+        appendText(head, 'th', '', 'Toplam');
+
+        var body = table.createTBody();
+        [
+            { team: game.homeTeam, side: 'home' },
+            { team: game.awayTeam, side: 'away' }
+        ].forEach(function (entry) {
+            var row = body.insertRow();
+            appendText(row, 'th', '', entry.team.name);
+            var total = 0;
+            game.quarters.forEach(function (quarter) {
+                var score = entry.side === 'home' ? quarter.homePoints : quarter.awayPoints;
+                total += score;
+                appendText(row, 'td', '', String(score));
+            });
+            appendText(row, 'td', 'score-total', String(total));
+        });
+        section.appendChild(table);
+        return section;
+    }
+
+    function playersWithPoints(roster, scores, teamId) {
+        var pointsByPlayer = Object.create(null);
+        scores.forEach(function (score) {
+            if (score.teamId === teamId) pointsByPlayer[score.playerId] = score.points;
+        });
+
+        var listedIds = Object.create(null);
+        var players = roster.map(function (player) {
+            listedIds[player.id] = true;
+            return {
+                jerseyNumber: player.jerseyNumber,
+                name: player.firstName + ' ' + player.lastName,
+                position: player.position,
+                points: pointsByPlayer[player.id] || 0
+            };
+        });
+        scores.forEach(function (score) {
+            if (score.teamId === teamId && !listedIds[score.playerId]) {
+                players.push({
+                    jerseyNumber: '',
+                    name: 'Oyuncu #' + score.playerId,
+                    position: '-',
+                    points: score.points
+                });
+            }
+        });
+        return players;
+    }
+
+    function renderPlayerScores(team, players) {
+        var section = document.createElement('section');
+        section.className = 'game-detail-section';
+        appendText(section, 'h3', '', team.name + ' oyuncu sayıları');
+        if (players.length === 0) {
+            appendText(section, 'p', 'game-detail-empty', 'Oyuncu kadrosu bulunamadı.');
+            return section;
+        }
+
+        var table = document.createElement('table');
+        table.className = 'game-detail-table';
+        var head = table.createTHead().insertRow();
+        ['Oyuncu', 'Pozisyon', 'Sayı'].forEach(function (label) {
+            appendText(head, 'th', '', label);
+        });
+        var body = table.createTBody();
+        players.forEach(function (player) {
+            var row = body.insertRow();
+            appendText(row, 'td', '', (player.jerseyNumber === '' ? '' : '#' + player.jerseyNumber + ' ')
+                + player.name);
+            appendText(row, 'td', '', player.position);
+            appendText(row, 'td', 'score-total', String(player.points));
+        });
+        section.appendChild(table);
+        return section;
+    }
+
+    function renderGameDetail(result) {
+        var game = result.game;
+        var quarters = game.quarters || [];
+        var homeTotal = game.homeScore;
+        var awayTotal = game.awayScore;
+        if (homeTotal === null && quarters.length > 0) {
+            homeTotal = quarters.reduce(function (total, quarter) { return total + quarter.homePoints; }, 0);
+            awayTotal = quarters.reduce(function (total, quarter) { return total + quarter.awayPoints; }, 0);
+        }
+
+        el.gameDetailContent.replaceChildren();
+        el.gameDetailTitle.textContent = game.homeTeam.name + ' - ' + game.awayTeam.name;
+        appendText(el.gameDetailContent, 'p', 'game-detail-meta',
+            game.roundNumber + '. Hafta · ' + (STATUS_LABELS[game.status] || game.status));
+        appendText(el.gameDetailContent, 'p', 'game-detail-score',
+            homeTotal === null ? 'Skor girilmedi' : homeTotal + ' - ' + awayTotal);
+        el.gameDetailContent.appendChild(renderQuarterScores(game));
+
+        var playerGrid = document.createElement('div');
+        playerGrid.className = 'player-score-grid';
+        playerGrid.append(
+            renderPlayerScores(game.homeTeam,
+                playersWithPoints(result.homePlayers, game.playerPoints || [], game.homeTeam.id)),
+            renderPlayerScores(game.awayTeam,
+                playersWithPoints(result.awayPlayers, game.playerPoints || [], game.awayTeam.id))
+        );
+        el.gameDetailContent.appendChild(playerGrid);
+    }
+
+    function showGameDetails(gameId) {
+        // Önceki maçın geç gelen yanıtı yeni açılan maçın üzerine yazılmasın.
+        var request = ++state.detailRequest;
+        function isCurrent() {
+            return request === state.detailRequest;
+        }
+
+        el.gameDetailDialog.showModal();
+        el.gameDetailContent.replaceChildren();
+        appendText(el.gameDetailContent, 'p', 'game-detail-empty', 'Maç bilgileri yükleniyor...');
+
+        getJson('api/games/' + gameId)
+            .then(function (game) {
+                return Promise.all([
+                    getTeamPlayers(game.homeTeam.id, 0, []),
+                    getTeamPlayers(game.awayTeam.id, 0, [])
+                ]).then(function (rosters) {
+                    return { game: game, homePlayers: rosters[0], awayPlayers: rosters[1] };
+                });
+            })
+            .then(function (result) {
+                if (isCurrent()) renderGameDetail(result);
+            })
+            .catch(function (error) {
+                if (!isCurrent()) return;
+                el.gameDetailContent.replaceChildren();
+                appendText(el.gameDetailContent, 'p', 'result-entry-error',
+                    'Maç bilgisi alınamadı: ' + error.message);
+            });
     }
 
     function isGameMatchingFilter(game, filter) {
@@ -398,6 +593,18 @@
     }
 
     function setupEvents() {
+        el.gameDetailClose.addEventListener('click', function () {
+            el.gameDetailDialog.close();
+        });
+        // Yalnızca pencerenin dışına (arka plana) tıklanınca kapat. event.target tek başına yetmez:
+        // pencerenin iç boşluğuna (padding) tıklamak da hedef olarak dialog'un kendisini verir.
+        el.gameDetailDialog.addEventListener('click', function (event) {
+            var box = el.gameDetailDialog.getBoundingClientRect();
+            var outside = event.clientX < box.left || event.clientX > box.right
+                || event.clientY < box.top || event.clientY > box.bottom;
+            if (event.target === el.gameDetailDialog && outside) el.gameDetailDialog.close();
+        });
+
         el.prevRoundBtn.addEventListener('click', function () {
             if (state.currentRoundNumber > 1) {
                 state.showAllRounds = false;
@@ -450,6 +657,7 @@
             })
             .then(function (fixtureData) {
                 if (fixtureData && fixtureData.rounds && fixtureData.rounds.length > 0) {
+                    state.isDemo = false;
                     state.rounds = fixtureData.rounds;
                     state.currentRoundNumber = 1;
                     render();
@@ -467,6 +675,7 @@
                             throw new Error('Fikstür için yeterli takım bulunamadı.');
                         }
                         el.seasonTitle.textContent = 'EuroLeague 2025-26 Sezonu (Demo Fikstür)';
+                        state.isDemo = true;
                         state.rounds = generateCircleMethodFixture(teams);
                         state.currentRoundNumber = 1;
                         render();

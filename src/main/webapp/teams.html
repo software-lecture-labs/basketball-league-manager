@@ -32,7 +32,7 @@
             <input type="search" id="team-search" placeholder="Takım veya şehir ara" autocomplete="off">
         </label>
         <ol class="team-list" id="team-list" aria-label="Takım listesi"></ol>
-        <p class="notice" id="team-notice" hidden></p>
+        <p class="notice" id="team-notice" role="status" aria-live="polite" hidden></p>
     </section>
 
     <section class="sheet" id="sheet" aria-live="polite" tabindex="-1">
@@ -60,7 +60,7 @@
                 </thead>
                 <tbody id="roster-body"></tbody>
             </table>
-            <p class="notice" id="roster-notice" hidden></p>
+            <p class="notice" id="roster-notice" role="status" aria-live="polite" hidden></p>
 
             <section class="season-card" id="team-season-panel" aria-labelledby="team-season-title" hidden>
                 <header class="season-card-head">

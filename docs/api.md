@@ -69,8 +69,8 @@ Takımın yer aldığı sezonları başlangıç tarihine göre yeniden eskiye s�
 
 ### `GET /teams/{id}/seasons/{seasonId}/overview`
 
-Takımın seçilen sezondaki puan durumu satırını ve en fazla beş son onaylanmış maçını döner. Maçlar hafta numarasına
-göre yeniden eskiye sıralıdır; yalnızca sonucu onaylanmış maçlar dahil edilir.
+Takımın seçilen sezondaki puan durumu satırını ve en fazla beş son onaylanmış maçını döner.
+Maçlar hafta numarasına göre yeniden eskiye sıralıdır; yalnızca sonucu onaylanmış maçlar dahil edilir.
 
 ```json
 {
